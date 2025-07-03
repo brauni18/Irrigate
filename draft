@@ -1,0 +1,103 @@
+
+<form id="line-calculation-1" class="row g-3">
+    <div class="col-md-12">
+
+      <label for="plantType" class="form-label">Plant Type and maintenance level low-💧 high-💧💧💧</label>
+      <select id="plantType" name="plantType" class="form-control w-100"> <!-- Full width -->
+        <option value="">(select one)</option>
+        <option class="tree" value="0.3">Trees</option>
+        <option class="roses" value="0.5">Roses 💧💧</option>
+        <option class="roses" value="0.65">Roses 💧💧💧</option>
+        <option class="grass" value="0.3">Grass 💧</option>
+        <option class="grass" value="0.45">Grass 💧💧</option>
+        <option class="grass" value="0.6">Grass 💧💧💧</option>
+        <option class="bush" value="0.25">Bush 💧</option>
+        <option class="bush" value="0.3">Bush 💧💧</option>
+        <option class="bush" value="0.45">Bush 💧💧💧</option>
+        <option class="small bush" value="0.5">Small Bush💧💧</option>
+        <option class="water-wise" value="0.01">Water-wise Plants 💧</option>
+        <option class="water-wise" value="0.1">Water-wise Plants 💧💧</option>
+        <option class="water-wise" value="0.2">Water-wise Plants 💧💧💧</option>
+      </select>
+    </div>
+    <div class="col-md-12">
+      <label id="maintenance-level-1" for="customRange1" class="form-label">Maintenance level</label>
+      <input type="range" class="form-range " id="customRange1"> <!-- Full width -->
+    </div>
+    <div class="col-md-12">  
+      <label for="location" class="form-label">Location</label>
+      
+      <select id="location" name="location"  class="form-control w-100">
+          <option value="">(select one)</option>
+          <option value="6.47">North</option>
+          <option value="7.5">Golan Heights & Ahola</option>
+          <option value="7.96">Emek Bit Shean</option>
+          <option value="6.55">Center</option>
+          <option value="6.91">South</option>
+          <option value="8.29">Negev</option>
+          <option value="11.1">Eilat & Dead Sea</option>
+      </select>
+      </label>
+    </div>
+    <label for="interval"class="form-label"
+              >Wanted Interval (by days)
+              <input
+                  type="number"
+                  id="interval"
+                  class="form-control w-100"
+                  name="interval"
+                  min="1"
+              />
+              </label>
+  
+              <label for="areaSize"class="form-label"
+              >Area Size (Squre meter)
+              <input
+                  id="areaSize"
+                  type="number"
+                  class="form-control w-100"
+                  name="areaSize"
+                  min="0.1"
+                  max="99999"
+              />
+              </label>
+              <div class="col-md-6">
+                <label for="Drip-distance"class="form-label"
+                >Drip distance
+                 <select id="Drip-distance" name="Drip-distance" class="form-control w-100">
+                     <option value="0.3">0.3</option>
+                     <option value="0.5">0.5</option>
+                     <option value="1.0">1.0</option>
+                 </select>
+                </label>
+              </div>
+              <div class="col-md-6">
+                <label for="dripFlow"class="form-label"
+                >Drip Flow
+                  <select id="dripFlow" name="dripFlow" class="form-control w-100">
+                      <option value="1.6">1.6</option>
+                      <option value="2.3">2.3</option>
+                      <option value="3.5">3.5</option>
+                  </select>
+                </label>
+              </div>
+    <div class="col-md-12">
+      <a href="somewhere.html" class="btn btn-success w-100">OK</a> <!-- Full width -->
+    </div>
+  </form>
+
+
+
+  <!-- <div class="dropdown">
+        <button id="user-control-dropdown" class="btn btn-outline" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-person-circle"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-dark">
+          <li><a class="dropdown-item active" href="#">Action</a></li>
+          <li><a class="dropdown-item" href="#">Another action</a></li>
+          <li><a class="dropdown-item" href="#">Something else here</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="#">Separated link</a></li>
+        </ul>
+      </div> -->
+  

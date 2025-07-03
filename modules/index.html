@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="styles.css" />
+    <!-- <a href="somewhere.html">Go to somewhere</a> -->
+
+    <title>Irrigate</title>
+    
+  </head>
+  <body>
+  <!-- <div class="container-fluid"> -->
+    <!-- Navbar -->
+    <nav id="navbar" class="navbar bg-body-tertiary px-3 w-100" data-bs-theme="dark">
+      <div class="d-flex align-items-center justify-content-between w-100">
+        <a class="navbar-brand">Irrigate</a>
+        <form class="d-flex" role="search">
+          <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+          <button id="btn-serch-icon" class="btn btn-outline btn-serch-icon" type="submit">
+            <i class="bi bi-search"></i>
+          </button>
+        </form>
+      </div>
+    </nav>
+
+    <div class="row">
+      <!-- Sidebar -->
+      <div class="col-auto p-0 mb-auto"> 
+        <a href="somewhere.html" class="text-light text-decoration-none"></a>
+          <div id="sidebar" class="d-flex flex-column flex-shrink-0 p-3 text-white">
+            <ul class="nav nav-pills flex-column mb-auto">
+              <!-- Main Buttons -->
+              <li class="nav-item">
+                <a href="#" class="nav-link active text-white" aria-current="page">
+                  <i id="sidebar-btn-home" class="sidebar-btn bi-house"></i>
+                  <span>Home</span>
+                </a>
+              </li>
+              <li>
+                <a href="#" class="nav-link text-white">
+                  <i id="sidebar-btn-calender" class="sidebar-btn bi bi-calendar-event"></i>
+                  <span>Calender</span>
+                </a>
+              </li>
+              <li>
+                <a href="#" class="nav-link text-white">
+                  <i id="sidebar-btn-speedometer" class="sidebar-btn bi bi-speedometer"></i>
+                  <span>Statistics</span>
+                </a>
+              </li>
+              <li>
+                <a href="#" class="nav-link text-white">
+                  <i id="sidebar-btn-history-log" class="sidebar-btn bi bi-clock-history"></i>
+                  <span>History Log</span>
+                </a>
+              </li>
+            </ul>
+
+            <!-- Settings Button -->
+            <ul class="nav nav-pills flex-column mb-1 ">
+              <li>
+                <a href="#" class="nav-link text-white">
+                  <i id="sidebar-btn-gear" class="sidebar-btn bi bi-gear"></i>
+                  <span>Settings</span>
+                </a>
+              </li>
+              <!-- Divider -->
+              <hr class="my-2">
+                <li>
+                  <a href="#" class="nav-link text-white">
+                    <i id="sidebar-btn-user" class="sidebar-btn bi bi-person-circle"></i>
+                    <span>User</span>
+                  </a>
+                </li>
+            </ul>
+          </div>
+        </a>
+      </div>
+
+      <!-- Main Content -->
+      <div class="col">
+        <div class="album py-5">
+          <div class="container">
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+              <div class="col">
+                <a href="somewhere.html" class="text-light text-decoration-none">
+                  <div class="card h-100 card text-bg-dark border-secondary">
+                    <img src="https://www.thespruce.com/thmb/Y4wxxbBnxIGKK8v4eoI5whUZP2c=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/byladylpergola-f0e18912bd13494682b988bcf37c1265.jpg" class="card-img-top" alt="default image">
+                    <div class="card-body">
+                      <h5 class="card-title">Sivan</h5>
+                      <h7 class="card-addres">Emek bracha - 27</h7>
+                      <div>
+                        <p class="card-text">
+                          Irrigation days:
+                        </p>
+                      </div>
+                      <div>
+                        <p class="card-text">
+                          duration:
+                        </p>
+                      </div>
+                      <div>
+                        <p class="card-text">
+                          total amount:
+                        </p>
+                      </div>
+                    </div>
+                    <div class="card-footer border-secondary d-flex justify-content-between align-items-center">
+                      <small class="text-body-light">Last updated 3 mins ago</small>
+                      <div>
+                        <button class="btn btn-sm text-danger me-2">
+                          <i class="bi bi-trash3"></i>
+                        </button>
+                        <button class="btn btn-sm text-light">
+                          <i class="bi bi-pen"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </a>
+              </div>
+              <!-- Add more cards here -->
+               
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <!-- </div> -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+  </body>
+  </html>

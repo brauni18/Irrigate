@@ -1,0 +1,120 @@
+:root { 
+    --color-line1--: #00c46a;
+    --color-line2--: #ffb545;
+    --color-line3--:#fe69b3; 
+    --color-line4--:#6597f2; 
+
+    --color-dark--1: #22262c;
+    --color-dark--2: #282d35;
+    --color-dark--3: #343a40;
+
+    --color-light--1: #aaa;
+    --color-light--2: #ececec;
+    --color-light--3: rgb(214, 222, 224);
+  }
+  /*body */
+  body {
+    background-color: var(--color-dark--1);
+    
+  }
+
+  /*navbar */
+
+  #navbar {
+    margin: 0;
+    width: 100%;
+    border-bottom: 1px solid var(--color-dark--3);
+    box-shadow: #343a40 0px 0px 2px;
+  }
+  #btn-serch-icon{
+  padding:0.25rem;
+  width:3rem;
+  height:2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+#btn-serch-icon:hover i {
+  text-shadow: 0 0 8px  rgba(102, 194, 255, 0.902);; /* Neon blue glow effect */
+  color: rgba(102, 194, 255, 0.902);; /* Optional: Change icon color to blue */
+}
+
+/*sidebar */
+
+ #sidebar{
+  height: 93vh;
+  overflow-y: auto;
+  background-color: var(--color-dark--2);
+  border-right:1px solid var(--color-dark--3);
+  width: 70px; /* Default width (collapsed) */
+  transition: width 0.3s ease; /* Smooth transition for width */
+  overflow: hidden; /* Hide content that overflows */
+  white-space: nowrap; /* Prevent text wrapping */ 
+  }
+#sidebar:hover {
+  width: 250px; /* Expanded width on hover */
+}
+#sidebar .nav-link span {
+  display: none; /* Hide text by default */
+}
+
+#sidebar:hover .nav-link span {
+  display: inline; /* Show text when hovered */
+}
+
+#sidebar .nav-link i {
+  font-size: 1.2rem; /* Adjust icon size */
+  margin-right: 0; /* Remove margin when collapsed */
+  transition: text-shadow 0.3s ease; /* Smooth transition for hover effect */
+}
+
+#sidebar .nav-link:hover i {
+  text-shadow: 0 0 8px rgba(102, 194, 255, 0.902); /* Neon blue glow effect */
+  color: rgba(102, 194, 255, 0.902); /* Optional: Change icon color to blue */
+}
+
+#sidebar .nav-link.active {
+  background-color: transparent !important; /* Remove the blue background */
+  color: var(--color-light--1); /* Optional: Adjust text color for active link */
+}
+#sidebar:hover .nav-link i {
+  margin-right: 10px; /* Add margin when expanded */
+}
+
+/*card */
+
+.card {
+  background-color:var(--color-dark--2) ;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.card:hover {
+  box-shadow: 0 0 15px rgba(102, 194, 255, 0.902); /* Glow effect around the edges */
+  border-color:rgba(102, 194, 255, 0.902); /* Highlight the border on hover */
+}
+.card-addres{
+  font-size:1.15em ;
+}
+.card-img-top {
+  display: block;
+  margin: 0 auto; /* Center the image horizontally */
+  width: 100%; /* Make the image take the full width of the card */
+  height: 200px; /* Set a fixed height for all images */
+  object-fit: cover; /* Ensures the image fills the area without distortion */
+}
+
+#line-btn {
+  background-color: #343a40;  
+}
+
+
+/* .card,
+#plantType,
+#customRange1,
+button,
+a.btn-success {
+  width: 400px; 
+  max-width: 100%; 
+  } */
+
