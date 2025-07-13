@@ -2,7 +2,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const mongoose = require('mongoose');
-;
 const api_gardens = require('./routers/api_gardens');
 
 
@@ -12,10 +11,12 @@ mongoose.connect(process.env.CONNECTION_STRING, {  });
 
 var app = express();
 app.use(cors());
-// app.use(bodyParser.urlencoded({extended : true}));
-// app.use(express.json());
+app.use(bodyParser.urlencoded({extended : true}));
+app.use(express.json());
 // app.set('view engine', 'ejs');
 app.use(express.static('public'));
 app.use('/api/gardens', api_gardens);
 
-app.listen(process.env.PORT);
+app.listen(process.env.PORT, () => {
+    console.log('Starting server on port', process.env.PORT);
+});

@@ -2,13 +2,16 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const Garden = new Schema({
+    name: {
+        type: String,
+        required: false
+    },
     address: {
         type: String,
         required: true
     },
-    name: {
+    Irrigation: {
         type: String,
-        required: false
     },
     Date: {
         type: Date,
