@@ -7,7 +7,9 @@ const api_gardens = require('./routers/api_gardens');
 
 require('custom-env').env(process.env.NODE_ENV, './config');
 
-mongoose.connect(process.env.CONNECTION_STRING, {  });
+mongoose.connect(process.env.CONNECTION_STRING, { })
+  .then(() => console.log('MongoDB connected!'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 var app = express();
 app.use(cors());
@@ -17,6 +19,4 @@ app.use(express.json());
 app.use(express.static('public'));
 app.use('/api/gardens', api_gardens);
 
-app.listen(process.env.PORT, () => {
-    console.log('Starting server on port', process.env.PORT);
-});
+app.listen(process.env.PORT);

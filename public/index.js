@@ -1,17 +1,22 @@
-document.getElementById('createGardenForm').addEventListener('submit', async function(e) {
-  e.preventDefault();
+
+API_BASE_URL = '/api/gardens';
+
+const createGarden = async function(event) {
+  event.preventDefault();
 
   const name = document.getElementById('gardenName').value;
   const address = document.getElementById('gardenAddress').value;
-  const irrigation = document.getElementById('gardenIrrigation').value;
+  const gardenCreation = document.getElementById('gardenCreation');
 
-  const response = await fetch('/api/gardens', {
+  const response = await fetch(API_BASE_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, address, irrigation })
+    body: JSON.stringify({ name, address })
   });
 
-  if (response.ok) {
+  if (response.status === 404) {
+    gardenCreation.textContent = `Garden creation failed`;
+  } else {
     const garden = await response.json();
     const cardHtml = `
       <div class="col">
@@ -20,7 +25,6 @@ document.getElementById('createGardenForm').addEventListener('submit', async fun
             <div class="card-body">
               <h5 class="card-title">${garden.name}</h5>
               <h7 class="card-addres">${garden.address}</h7>
-              <div><p class="card-text">Irrigation: ${garden.Irrigation || ''}</p></div>
             </div>
             <div class="card-footer border-secondary d-flex justify-content-between align-items-center">
               <small class="text-body-light">Just now</small>
@@ -33,12 +37,9 @@ document.getElementById('createGardenForm').addEventListener('submit', async fun
         </a>
       </div>
     `;
-    document.querySelector('.row.row-cols-1').insertAdjacentHTML('beforeend', cardHtml);
-
-    var modal = bootstrap.Modal.getInstance(document.getElementById('createGardenModal'));
-    modal.hide();
-    this.reset();
-  } else {
-    alert('Failed to create garden.');
+    // Add the new card to the end of the gardenCreation container
+    gardenCreation.insertAdjacentHTML('beforeend', cardHtml);
   }
-});
+}
+
+document.getElementById('createGardenForm').addEventListener('submit', createGarden);

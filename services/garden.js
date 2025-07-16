@@ -1,12 +1,10 @@
 const Garden = require('../models/garden');
 
 // Create a new garden
-async function createGarden(name, address, irrigation) {
-
-  const garden = new Garden({name: name, address: address, Irrigation: irrigation});
-   garden.Date = new Date();
+const createGarden = async(name, address) => {
+  const garden = new Garden({ name:name, address:address });
   return await garden.save();
-}
+};
 
 // Edit (update) a garden by ID
 // async function editGarden(id, data) {
