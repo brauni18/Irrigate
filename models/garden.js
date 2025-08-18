@@ -9,7 +9,8 @@ const Garden = new Schema({
     address: {
         type: String,
         required: true
-    }
+    },
+    image:{type: String},
     // Irrigation: {
     //     type: String,
     // },

@@ -76,17 +76,19 @@
                     <span>User</span>
                   </a>
                 </li>
-            </ul>
-          </div>
-        </a>
+              </ul>
+            </div>
+          </a>
       </div>
-
-      <!-- Main Content -->
+        <!-- Main Content -->
       <div class="col">
         <div class="album py-5">
           <div class="container">
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-              <div class="col">
+            <div id="cardsContainer" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+              <!-- Add more cards here -->
+              
+              <!-- Example Card -->
+              <!-- <div class="col">
                 <a href="somewhere.html" class="text-light text-decoration-none">
                   <div class="card h-100 card text-bg-dark border-secondary">
                     <img src="https://www.thespruce.com/thmb/Y4wxxbBnxIGKK8v4eoI5whUZP2c=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/byladylpergola-f0e18912bd13494682b988bcf37c1265.jpg" class="card-img-top" alt="default image">
@@ -122,16 +124,13 @@
                     </div>
                   </div>
                 </a>
-              </div>
-              <!-- Add more cards here -->
-               <div id ="gardenCreation" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-               </div>
+              </div> -->
             </div>
           </div>
         </div>
       </div>
-    </div>
-  <!-- </div> -->
+    </div>     
+
   <!-- Create Garden Floating Button -->
 <button type="button"
         class="btn btn-success btn-lg rounded-circle shadow position-fixed"
@@ -161,8 +160,8 @@
             <input type="text" class="form-control" id="gardenAddress" name="address" required>
           </div>
           <div class="mb-3">
-            <label for="gardenIrrigation" class="form-label">Irrigation</label>
-            <input type="text" class="form-control" id="gardenIrrigation" name="irrigation">
+            <label for="gardenImage" class="form-label">Place Image</label>
+            <input type="file" class="form-control" id="gardenImage" name="gardenImage" accept="image/png, image/jpeg" >
           </div>
           <button type="submit" class="btn btn-success">Create</button>
         </form>
