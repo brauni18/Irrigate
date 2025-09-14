@@ -18,30 +18,28 @@ const getGarden = async (id) => {
   }
 
 };
-// Edit (update) a garden by ID
-// async function editGarden(id, data) {
-//   return await Garden.findByIdAndUpdate(id, data, { new: true });
-// }
+// Update a garden by ID
+const updateGarden = async (id, updateData) => {
+  try {
+    return await Garden.findByIdAndUpdate(id, updateData, { new: true });
+  } catch (error) {
+    throw new Error(`Failed to update garden: ${error.message}`);
+  }
+};
 
-// // Delete a garden by ID
-// async function deleteGarden(id) {
-//   return await Garden.findByIdAndDelete(id);
-// }
-
-// // (Optional) Get a garden by ID
-// async function getGardenById(id) {
-//   return await Garden.findById(id);
-// }
-
-// // (Optional) Get all gardens
-// async function getAllGardens() {
-//   return await Garden.find();
-// }
+// Delete a garden by ID
+const deleteGarden = async (id) => {
+  try {
+    return await Garden.findByIdAndDelete(id);
+  } catch (error) {
+    throw new Error(`Failed to delete garden: ${error.message}`);
+  }
+};
 
 module.exports = {
   createGarden,
   getAllGardens,
-  getGarden
-  // updateGarden,
-  // deleteGarden,
+  getGarden,
+  updateGarden,
+  deleteGarden,
 };
