@@ -31,9 +31,9 @@ router.route('/')
     .get(gardenController.getGardens)
     .post(upload.single('image'), gardenController.createGarden);
 
-// router.route('/:id')
-//     .get(gardenController.getGarden);
-//     .patch(gardenController.updateGarden)
-//     .delete(gardenController.deleteGarden);
+router.route('/:id')
+    .get(gardenController.getGarden)
+    .patch(upload.single('image'), gardenController.updateGarden)
+    .delete(gardenController.deleteGarden);
 
 module.exports = router;

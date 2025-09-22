@@ -7,10 +7,14 @@ const getGardens = async (req, res) => {
 };
 //getting garden by id for future search
 const getGarden = async (req, res) => {
-  const garden = await garden_Service.getGarden(req.params.id);
-  res.render('garden', { garden });
-  if (!garden) {
-    res.status(404).send('Garden not found');
+  try {
+    const garden = await garden_Service.getGarden(req.params.id);
+    if (!garden) {
+      return res.status(404).json({ error: 'Garden not found' });
+    }
+    res.json(garden);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 const createGarden = async (req, res) => {
@@ -27,8 +31,43 @@ const createGarden = async (req, res) => {
         // res.json(garden);
     
 };
+
+const updateGarden = async (req, res) => {
+    try {
+        const { name, address } = req.body;
+        const updateData = { name, address };
+        
+        // If a new image is uploaded, include it in the update
+        if (req.file) {
+            updateData.image = `/uploads/${req.file.filename}`;
+        }
+        
+        const garden = await garden_Service.updateGarden(req.params.id, updateData);
+        if (!garden) {
+            return res.status(404).json({ error: 'Garden not found' });
+        }
+        res.json(garden);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+};
+
+const deleteGarden = async (req, res) => {
+    try {
+        const garden = await garden_Service.deleteGarden(req.params.id);
+        if (!garden) {
+            return res.status(404).json({ error: 'Garden not found' });
+        }
+        res.json({ message: 'Garden deleted successfully', garden });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+};
+
 module.exports = {
     createGarden,
     getGardens,
-    getGarden
+    getGarden,
+    updateGarden,
+    deleteGarden
 }

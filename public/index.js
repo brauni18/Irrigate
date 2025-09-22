@@ -28,7 +28,7 @@ const getGardens = async () => {
       card.innerHTML = `
         <a href="somewhere.html" class="text-light text-decoration-none">
           <div class="card h-100 card text-bg-dark border-secondary">
-            <img src="" class="card-img-top" alt="default image">
+            <img src="${garden.image || 'https://www.thespruce.com/thmb/Y4wxxbBnxIGKK8v4eoI5whUZP2c=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/byladylpergola-f0e18912bd13494682b988bcf37c1265.jpg'}" class="card-img-top" alt="garden image" style="height: 200px; object-fit: cover;">
             <div class="card-body">
               <h5 class="card-title">${garden.name}</h5>
               <h7 class="card-addres">${garden.address}</h7>
@@ -51,10 +51,10 @@ const getGardens = async () => {
             <div class="card-footer border-secondary d-flex justify-content-between align-items-center">
               <small class="text-body-light">Last updated 3 mins ago</small>
               <div>
-                <button class="btn btn-sm text-danger me-2">
+                <button class="btn btn-sm text-danger me-2" onclick="deleteGarden('${garden._id}')">
                   <i class="bi bi-trash3"></i>
                 </button>
-                <button class="btn btn-sm text-light">
+                <button class="btn btn-sm text-light" onclick="editGarden('${garden._id}', '${garden.name}', '${garden.address}')">
                   <i class="bi bi-pen"></i>
                 </button>
               </div>
@@ -111,3 +111,109 @@ const createGarden = async function(event) {
   
 }
 document.getElementById('createGardenForm').addEventListener('submit', createGarden);
+
+// Function to delete a garden
+const deleteGarden = async (gardenId) => {
+  if (confirm('Are you sure you want to delete this garden?')) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/${gardenId}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        console.log('Garden deleted successfully');
+        await getGardens(); // Refresh the garden list
+      } else {
+        const error = await response.json();
+        console.error('Failed to delete garden:', error.error);
+        alert('Failed to delete garden: ' + error.error);
+      }
+    } catch (error) {
+      console.error('Error deleting garden:', error);
+      alert('Error deleting garden');
+    }
+  }
+};
+
+// Function to edit a garden
+const editGarden = (gardenId, currentName, currentAddress) => {
+  // Pre-fill the modal with current values
+  document.getElementById('gardenName').value = currentName;
+  document.getElementById('gardenAddress').value = currentAddress;
+  
+  // Change the modal title and button text
+  document.getElementById('createGardenModalLabel').textContent = 'Edit Garden';
+  
+  // Get the form and change its submit handler
+  const form = document.getElementById('createGardenForm');
+  const submitButton = form.querySelector('button[type="submit"]');
+  submitButton.textContent = 'Update';
+  
+  // Remove existing event listener and add update handler
+  form.removeEventListener('submit', createGarden);
+  
+  const updateHandler = async (event) => {
+    event.preventDefault();
+    
+    const modal = bootstrap.Modal.getInstance(document.getElementById('createGardenModal'));
+    const name = document.getElementById('gardenName').value;
+    const address = document.getElementById('gardenAddress').value;
+    const image = document.getElementById('gardenImage').files[0];
+    
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('address', address);
+    if (image) {
+      formData.append('image', image);
+    }
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/${gardenId}`, {
+        method: 'PATCH',
+        body: formData
+      });
+      
+      if (response.ok) {
+        const updatedGarden = await response.json();
+        modal.hide();
+        console.log('Garden updated successfully:', updatedGarden.name);
+        await getGardens(); // Refresh the garden list
+        
+        // Reset form for next use
+        resetFormToCreate();
+      } else {
+        const error = await response.json();
+        console.error('Failed to update garden:', error.error);
+        alert('Failed to update garden: ' + error.error);
+      }
+    } catch (error) {
+      console.error('Error updating garden:', error);
+      alert('Error updating garden');
+    }
+  };
+  
+  // Add the update handler
+  form.addEventListener('submit', updateHandler, { once: true });
+  
+  // Show the modal
+  const modal = new bootstrap.Modal(document.getElementById('createGardenModal'));
+  modal.show();
+};
+
+// Function to reset form back to create mode
+const resetFormToCreate = () => {
+  document.getElementById('createGardenModalLabel').textContent = 'Create Garden';
+  const form = document.getElementById('createGardenForm');
+  const submitButton = form.querySelector('button[type="submit"]');
+  submitButton.textContent = 'Create';
+  form.reset();
+  
+  // Remove any existing event listeners and add back the create handler
+  form.removeEventListener('submit', createGarden);
+  form.addEventListener('submit', createGarden);
+};
+
+// Reset form when modal is hidden
+document.getElementById('createGardenModal').addEventListener('hidden.bs.modal', () => {
+  resetFormToCreate();
+});
