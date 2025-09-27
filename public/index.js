@@ -2,14 +2,8 @@ API_BASE_URL = '/api/gardens';
 //handle loading gardens when the page loads
 document.addEventListener('DOMContentLoaded', async () => {
    await getGardens(); // Load gardens when the page loads
-});
-// Handle the home button click to send the user to the home page
-//this should load the gardens
-//when the user clicks on the home button
-document.getElementById('sidebar-btn-home').addEventListener('click', async (e) => {
-  e.preventDefault(); // Prevent the default anchor behavior
- getGardens(); // Load gardens when the home button is clicked
-});
+   
+  });
  
   // This function will be called when the page loads
   //plus if the user clicks on the home button
@@ -26,7 +20,7 @@ const getGardens = async () => {
       const card = document.createElement('div');
       card.className = 'col';
       card.innerHTML = `
-        <a href="somewhere.html" class="text-light text-decoration-none">
+        <a href="irrigation_controller.html?id=${garden._id}" class="text-light text-decoration-none">
           <div class="card h-100 card text-bg-dark border-secondary">
             <img src="${garden.image || 'https://www.thespruce.com/thmb/Y4wxxbBnxIGKK8v4eoI5whUZP2c=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/byladylpergola-f0e18912bd13494682b988bcf37c1265.jpg'}" class="card-img-top" alt="garden image" style="height: 200px; object-fit: cover;">
             <div class="card-body">
@@ -47,7 +41,8 @@ const getGardens = async () => {
                   total amount: 
                 </p>
               </div>
-            </div>
+              </div>
+            </a>
             <div class="card-footer border-secondary d-flex justify-content-between align-items-center">
               <small class="text-body-light">Last updated 3 mins ago</small>
               <div>
@@ -60,7 +55,6 @@ const getGardens = async () => {
               </div>
             </div>
           </div>
-        </a>
       `;
       container.appendChild(card);
     });

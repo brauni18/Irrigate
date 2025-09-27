@@ -1,0 +1,55 @@
+<nav id="navbar" class="navbar navbar-expand-lg bg-body-tertiary px-3" data-bs-theme="dark">
+  <div class="container-fluid">
+    <div class="row w-100 align-items-center">
+      <div class="col-4">
+        <a class="navbar-brand" href="#">
+          <i class="bi bi-droplet-fill me-2"></i>Irrigate
+        </a>
+      </div>
+
+      <div class="col-4 d-flex justify-content-center">
+        <form class="d-flex w-100" role="search" style="max-width: 400px;">
+          <div class="input-group">
+            <input class="form-control" type="search" placeholder="Search communities, posts..." aria-label="Search">
+            <button id="btn-search-icon" class="btn btn-outline-light" type="submit">
+              <i class="bi bi-search"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="col-4 d-flex justify-content-end">
+        <div class="header-icons d-flex align-items-center">
+          <a href="" class="nav-link create-post-link" title="Create Post">
+            <i id="create-post-btn" class="create-post-btn bi bi-plus-lg fs-5"></i>
+          </a>
+          <a href="#" class="nav-link" title="Messages">
+            <i class="bi bi-chat-dots fs-5"></i>
+          </a>
+          <a href="#" class="nav-link" title="Notifications">
+            <i class="bi bi-bell fs-5"></i>
+          </a>
+          <div class="nav-item dropdown">
+            <a href="#" class="nav-link dropdown-toggle" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Profile">
+              <i class="bi bi-person-circle fs-5"></i>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+              <li><a class="dropdown-item"><Strong>
+                    
+                  </Strong></a>
+              </li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li><a class="dropdown-item" href="/profile" method="GET">Edit Profile</a></li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li><a class="dropdown-item" href="/home">Logout</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
