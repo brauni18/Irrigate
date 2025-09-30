@@ -1,0 +1,156 @@
+/* Enhanced Line Controller Styling */
+
+/* Main container improvements */
+#main-content .container {
+  max-width: 1200px;
+}
+
+/* Line button styling */
+.btn-primary {
+  background: linear-gradient(135deg, rgba(102, 194, 255, 0.8), rgba(102, 194, 255, 1));
+  border: none;
+  padding: 12px 20px;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 194, 255, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 194, 255, 0.4);
+}
+
+/* Card styling improvements */
+.card-body.h-100.card {
+  background: linear-gradient(135deg, var(--color-dark--2), var(--color-dark--1));
+  border: 1px solid rgba(102, 194, 255, 0.2);
+  border-radius: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  padding: 2rem;
+}
+
+.card-body.h-100.card:hover {
+  border-color: rgba(102, 194, 255, 0.4);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  transform: translateY(-5px);
+}
+
+/* Form styling */
+.form-label {
+  font-weight: 600;
+  color: rgba(102, 194, 255, 0.9);
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.form-control, .form-select {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #fff;
+  padding: 10px 15px;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(102, 194, 255, 0.6);
+  box-shadow: 0 0 0 0.2rem rgba(102, 194, 255, 0.25);
+  color: #fff;
+}
+
+/* Range slider styling */
+.form-range {
+  background: transparent;
+}
+
+.form-range::-webkit-slider-track {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  height: 8px;
+}
+
+.form-range::-webkit-slider-thumb {
+  background: rgba(102, 194, 255, 1);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(102, 194, 255, 0.5);
+  width: 20px;
+  height: 20px;
+}
+
+/* Collapse content styling */
+.collapse .card-body {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  margin-top: 1rem;
+}
+
+/* Success button styling */
+.btn-success {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+/* Footer styling */
+.card-footer {
+  background: rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0 0 15px 15px;
+  padding: 15px;
+}
+
+/* Add icons to sections */
+.form-label::before {
+  font-family: "Bootstrap Icons";
+  margin-right: 8px;
+  color: rgba(102, 194, 255, 0.7);
+}
+
+.form-label[for="plantType"]::before {
+  content: "\f4e6"; /* bi-tree */
+}
+
+.form-label[for="location"]::before {
+  content: "\f5eb"; /* bi-geo-alt */
+}
+
+.form-label[for="interval"]::before {
+  content: "\f1c0"; /* bi-calendar */
+}
+
+.form-label[for="areaSize"]::before {
+  content: "\f4ae"; /* bi-bounding-box */
+}
+
+.form-label[for="Drip-distance"]::before {
+  content: "\f4e9"; /* bi-rulers */
+}
+
+.form-label[for="dripFlow"]::before {
+  content: "\f325"; /* bi-droplet */
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .card-body.h-100.card {
+    padding: 1.5rem;
+  }
+  
+  .btn-primary {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+}

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+      <link rel="stylesheet" href="styles.css">
+      <title>Line Controller - Irrigate</title>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <div id="navbar-placeholder"></div>
+    
+    <div class="row">
+      <!-- Sidebar -->
+      <div class="col-auto p-0 mb-auto"> 
+        <div id="sidebar-placeholder"></div>
+      </div>
+      
+      <!-- Main Content -->
+      <div id="main-content" class="col">
+        <div class="container mt-4 mb-5">
+          
+          <!-- Line Header -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h2 class="text-white mb-1">
+                    <i class="bi bi-droplet-fill me-2"></i>
+                    <span id="line-title">Line Controller</span>
+                  </h2>
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                      <li class="breadcrumb-item">
+                        <a href="irrigation_controller.html" class="text-decoration-none">
+                          <i class="bi bi-house me-1"></i>Main Controller
+                        </a>
+                      </li>
+                      <li class="breadcrumb-item active text-white" id="breadcrumb-line">Line</li>
+                    </ol>
+                  </nav>
+                </div>
+                <div>
+                  <button class="btn btn-outline-danger me-2" id="emergency-stop">
+                    <i class="bi bi-stop-circle me-1"></i>Emergency Stop
+                  </button>
+                  <button class="btn btn-success" id="start-irrigation">
+                    <i class="bi bi-play-circle me-1"></i>Start Now
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Single Configuration Form -->
+          <div class="row">
+            <div class="col-lg-8 mx-auto">
+              <div class="card bg-dark text-white border-secondary">
+                <div class="card-header">
+                  <h5 class="mb-0">
+                    <i class="bi bi-gear me-2"></i>Irrigation Configuration
+                  </h5>
+                </div>
+                <div class="card-body">
+                  <form id="line-calculation" class="row g-4">
+                    
+                    <!-- Plant Type Section -->
+                    <div class="col-12">
+                      <div class="form-section">
+                        <label for="plantType" class="form-label">
+                          <i class="bi bi-tree me-2"></i>Plant Type and Maintenance Level
+                        </label>
+                        <select id="plantType" name="plantType" class="form-select bg-dark text-white border-secondary">
+                          <option value="">(select one)</option>
+                          <option class="tree" value="0.3">🌳 Trees</option>
+                          <option class="roses" value="0.5">🌹 Roses 💧💧</option>
+                          <option class="roses" value="0.65">🌹 Roses 💧💧💧</option>
+                          <option class="grass" value="0.3">🌱 Grass 💧</option>
+                          <option class="grass" value="0.45">🌱 Grass 💧💧</option>
+                          <option class="grass" value="0.6">🌱 Grass 💧💧💧</option>
+                          <option class="bush" value="0.25">🌿 Bush 💧</option>
+                          <option class="bush" value="0.3">🌿 Bush 💧💧</option>
+                          <option class="bush" value="0.45">🌿 Bush 💧💧💧</option>
+                          <option class="small bush" value="0.5">🪴 Small Bush 💧💧</option>
+                          <option class="water-wise" value="0.01">🌵 Water-wise Plants 💧</option>
+                          <option class="water-wise" value="0.1">🌵 Water-wise Plants 💧💧</option>
+                          <option class="water-wise" value="0.2">🌵 Water-wise Plants 💧💧💧</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <!-- Maintenance Level -->
+                    <div class="col-12">
+                      <div class="form-section">
+                        <label for="customRange1" class="form-label">
+                          <i class="bi bi-speedometer2 me-2"></i>Maintenance Level
+                        </label>
+                        <div class="d-flex align-items-center">
+                          <span class="me-3 text-muted">Low</span>
+                          <input type="range" class="form-range flex-grow-1" id="customRange1" min="1" max="100" value="50">
+                          <span class="ms-3 text-muted">High</span>
+                        </div>
+                        <div class="text-center mt-2">
+                          <span class="badge bg-primary" id="maintenance-value">50%</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Location -->
+                    <div class="col-12">
+                      <div class="form-section">
+                        <label for="location" class="form-label">
+                          <i class="bi bi-geo-alt me-2"></i>Location
+                        </label>
+                        <select id="location" name="location" class="form-select bg-dark text-white border-secondary">
+                          <option value="">(select one)</option>
+                          <option value="6.47">🏔️ North</option>
+                          <option value="7.5">⛰️ Golan Heights & Ahola</option>
+                          <option value="7.96">🌾 Emek Bit Shean</option>
+                          <option value="6.55">🏙️ Center</option>
+                          <option value="6.91">🌅 South</option>
+                          <option value="8.29">🏜️ Negev</option>
+                          <option value="11.1">🌴 Eilat & Dead Sea</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <!-- Interval and Area -->
+                    <div class="col-md-6">
+                      <div class="form-section">
+                        <label for="interval" class="form-label">
+                          <i class="bi bi-calendar me-2"></i>Interval (days)
+                        </label>
+                        <input type="number" id="interval" class="form-control bg-dark text-white border-secondary" 
+                               name="interval" min="1" max="30" value="2">
+                      </div>
+                    </div>
+
+                    <div class="col-md-6">
+                      <div class="form-section">
+                        <label for="areaSize" class="form-label">
+                          <i class="bi bi-bounding-box me-2"></i>Area Size (m²)
+                        </label>
+                        <input id="areaSize" type="number" class="form-control bg-dark text-white border-secondary" 
+                               name="areaSize" min="0.1" max="99999" step="0.1" placeholder="e.g. 25.5">
+                      </div>
+                    </div>
+
+                    <!-- Drip Settings -->
+                    <div class="col-md-6">
+                      <div class="form-section">
+                        <label for="Drip-distance" class="form-label">
+                          <i class="bi bi-rulers me-2"></i>Drip Distance (m)
+                        </label>
+                        <select id="Drip-distance" name="Drip-distance" class="form-select bg-dark text-white border-secondary">
+                          <option value="0.3">0.3m</option>
+                          <option value="0.5" selected>0.5m</option>
+                          <option value="1.0">1.0m</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="col-md-6">
+                      <div class="form-section">
+                        <label for="dripFlow" class="form-label">
+                          <i class="bi bi-droplet me-2"></i>Drip Flow (L/h)
+                        </label>
+                        <select id="dripFlow" name="dripFlow" class="form-select bg-dark text-white border-secondary">
+                          <option value="1.6">1.6 L/h</option>
+                          <option value="2.3" selected>2.3 L/h</option>
+                          <option value="3.5">3.5 L/h</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="col-12 mt-4">
+                      <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-outline-secondary me-md-2">
+                          <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                        </button>
+                        <button type="button" class="btn btn-info me-md-2" id="calculate-btn">
+                          <i class="bi bi-calculator me-1"></i>Calculate
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                          <i class="bi bi-save me-1"></i>Save Configuration
+                        </button>
+                      </div>
+                    </div>
+
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Results Section -->
+          <div class="row mt-4" id="results-section" style="display: none;">
+            <div class="col-lg-8 mx-auto">
+              <div class="card bg-dark text-white border-success">
+                <div class="card-header bg-success">
+                  <h5 class="mb-0">
+                    <i class="bi bi-check-circle me-2"></i>Calculation Results
+                  </h5>
+                </div>
+                <div class="card-body">
+                  <div class="row text-center">
+                    <div class="col-md-4">
+                      <div class="result-item">
+                        <i class="bi bi-clock fs-2 text-primary mb-2"></i>
+                        <h6>Duration</h6>
+                        <div class="fs-4 fw-bold" id="result-duration">--</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="result-item">
+                        <i class="bi bi-droplet-fill fs-2 text-info mb-2"></i>
+                        <h6>Water Amount</h6>
+                        <div class="fs-4 fw-bold" id="result-water">--</div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="result-item">
+                        <i class="bi bi-calendar-week fs-2 text-warning mb-2"></i>
+                        <h6>Frequency</h6>
+                        <div class="fs-4 fw-bold" id="result-frequency">--</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    
+    <script src="components.js"></script>
+    <script src="line-controller.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+  </body>
+</html>
