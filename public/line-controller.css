@@ -143,6 +143,64 @@
   content: "\f325"; /* bi-droplet */
 }
 
+/* Breakdown items styling */
+.breakdown-item {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+.breakdown-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(102, 194, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.breakdown-item h7 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.breakdown-item .fw-bold {
+  color: rgba(102, 194, 255, 1);
+  font-size: 1.2rem;
+  margin-top: 0.5rem;
+}
+
+/* Enhanced maintenance section styling */
+.maintenance-info {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.maintenance-info small {
+  line-height: 1.4;
+}
+
+#min-label, #max-label {
+  font-size: 0.9rem;
+  text-align: center;
+  min-width: 60px;
+}
+
+#min-label small, #max-label small {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+#calculated-coefficient {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  padding: 5px 10px;
+  margin-top: 8px;
+}
+
 /* Responsive improvements */
 @media (max-width: 768px) {
   .card-body.h-100.card {
