@@ -1,417 +1,313 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="styles.css" />
+  
+  <title>main controller - Irrigate</title>
+</head>
+<body>
+  <!-- Navbar Container -->
+  <div id="navbar-placeholder"></div>
 
-      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-      <link rel="stylesheet" href="css/style.css">
-      <link rel="stylesheet" href="styles.css">
-      <title>irrigation_controller</title>
-  </head>
-  <body>
-    <!-- Navbar -->
-    <div id="navbar-placeholder"></div>
-    <div class="row">
-      <!-- Sidebar -->
+  <div class="row">
+    <!-- Sidebar Container -->
       <div class="col-auto p-0 mb-auto"> 
         <div id="sidebar-placeholder"></div>
       </div>
-        <!-- Main Content -->
-        <div id="main-content" class="col-md-9 col-lg-10">
-          <div class="container mt-5 mb-5">
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-              <div class="col">
-                <div class="card-body h-100 card text-bg-dark border-secondary">
-                    <button id="line-btn line-1" class="btn btn-primary mb-3"  type="button" data-bs-toggle="collapse" data-bs-target="#line-1-collapse" aria-expanded="false" aria-controls="collapse">
-                      line - 1
-                    </button>
-                    <div class="collapse" id="line-1-collapse">
-                      <div class="card card-body card text-bg-dark border-secondary mb-3">
-                        <form id="line-calculation-1" class="row g-3">
-                          <div class="col-md-12">
-                           
-                            <label for="plantType" class="form-label">Plant Type and maintenance level low-💧 high-💧💧💧</label>
-                            <select id="plantType" name="plantType" class="form-control w-100"> <!-- Full width -->
-                              <option value="">(select one)</option>
-                              <option class="tree" value="0.3">Trees</option>
-                              <option class="roses" value="0.5">Roses 💧💧</option>
-                              <option class="roses" value="0.65">Roses 💧💧💧</option>
-                              <option class="grass" value="0.3">Grass 💧</option>
-                              <option class="grass" value="0.45">Grass 💧💧</option>
-                              <option class="grass" value="0.6">Grass 💧💧💧</option>
-                              <option class="bush" value="0.25">Bush 💧</option>
-                              <option class="bush" value="0.3">Bush 💧💧</option>
-                              <option class="bush" value="0.45">Bush 💧💧💧</option>
-                              <option class="small bush" value="0.5">Small Bush💧💧</option>
-                              <option class="water-wise" value="0.01">Water-wise Plants 💧</option>
-                              <option class="water-wise" value="0.1">Water-wise Plants 💧💧</option>
-                              <option class="water-wise" value="0.2">Water-wise Plants 💧💧💧</option>
-                            </select>
-                          </div>
-                          <div class="col-md-12">
-                            <label id="maintenance-level-1" for="customRange1" class="form-label">Maintenance level</label>
-                            <input type="range" class="form-range " id="customRange1"> <!-- Full width -->
-                          </div>
-                          <div class="col-md-12">  
-                            <label for="location" class="form-label">Location</label>
-   
-                            <select id="location" name="location"  class="form-control w-100">
-                                <option value="">(select one)</option>
-                                <option value="6.47">North</option>
-                                <option value="7.5">Golan Heights & Ahola</option>
-                                <option value="7.96">Emek Bit Shean</option>
-                                <option value="6.55">Center</option>
-                                <option value="6.91">South</option>
-                                <option value="8.29">Negev</option>
-                                <option value="11.1">Eilat & Dead Sea</option>
-                            </select>
-                            </label>
-                          </div>
-                          <label for="interval"class="form-label"
-                                    >Wanted Interval (by days)
-                                    <input
-                                        type="number"
-                                        id="interval"
-                                        class="form-control w-100"
-                                        name="interval"
-                                        min="1"
-                                    />
-                                    </label>
-                                   
-                                    <label for="areaSize"class="form-label"
-                                    >Area Size (Squre meter)
-                                    <input
-                                        id="areaSize"
-                                        type="number"
-                                        class="form-control w-100"
-                                        name="areaSize"
-                                        min="0.1"
-                                        max="99999"
-                                    />
-                                    </label>
-                                    <div class="col-md-6">
-                                      <label for="Drip-distance"class="form-label"
-                                      >Drip distance
-                                       <select id="Drip-distance" name="Drip-distance" class="form-control w-100">
-                                           <option value="0.3">0.3</option>
-                                           <option value="0.5">0.5</option>
-                                           <option value="1.0">1.0</option>
-                                       </select>
-                                      </label>
-                                    </div>
-                                    <div class="col-md-6">
-                                      <label for="dripFlow"class="form-label"
-                                      >Drip Flow
-                                        <select id="dripFlow" name="dripFlow" class="form-control w-100">
-                                            <option value="1.6">1.6</option>
-                                            <option value="2.3">2.3</option>
-                                            <option value="3.5">3.5</option>
-                                        </select>
-                                      </label>
-                                    </div>
-                          <div class="col-md-12">
-                            <a href="somewhere.html" class="btn btn-success w-100">OK</a> <!-- Full width -->
-                          </div>
-                        </form>
-   
-                      </div>
-                    </div>    
-                    <button id="line-btn line-btn-2" class="btn btn-primary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#line-2-collapse" aria-expanded="false" aria-controls="collapse">
-                      line - 2
-                    </button>
-                    <div class="collapse" id="line-2-collapse">
-                      <div class="card card-body mb-3 card text-bg-dark">
-                        <form id="line-calculation-1" class="row g-3">
-                          <div class="col-md-12">
-                           
-                            <label for="plantType" class="form-label">Plant Type and maintenance level low-💧 high-💧💧💧</label>
-                            <select id="plantType" name="plantType" class="form-control w-100"> <!-- Full width -->
-                              <option value="">(select one)</option>
-                              <option class="tree" value="0.3">Trees</option>
-                              <option class="roses" value="0.5">Roses 💧💧</option>
-                              <option class="roses" value="0.65">Roses 💧💧💧</option>
-                              <option class="grass" value="0.3">Grass 💧</option>
-                              <option class="grass" value="0.45">Grass 💧💧</option>
-                              <option class="grass" value="0.6">Grass 💧💧💧</option>
-                              <option class="bush" value="0.25">Bush 💧</option>
-                              <option class="bush" value="0.3">Bush 💧💧</option>
-                              <option class="bush" value="0.45">Bush 💧💧💧</option>
-                              <option class="small bush" value="0.5">Small Bush💧💧</option>
-                              <option class="water-wise" value="0.01">Water-wise Plants 💧</option>
-                              <option class="water-wise" value="0.1">Water-wise Plants 💧💧</option>
-                              <option class="water-wise" value="0.2">Water-wise Plants 💧💧💧</option>
-                            </select>
-                          </div>
-                          <div class="col-md-12">
-                            <label id="maintenance-level-1" for="customRange1" class="form-label">Maintenance level</label>
-                            <input type="range" class="form-range " id="customRange1"> <!-- Full width -->
-                          </div>
-                          <div class="col-md-12">  
-                            <label for="location" class="form-label">Location</label>
-   
-                            <select id="location" name="location"  class="form-control w-100">
-                                <option value="">(select one)</option>
-                                <option value="6.47">North</option>
-                                <option value="7.5">Golan Heights & Ahola</option>
-                                <option value="7.96">Emek Bit Shean</option>
-                                <option value="6.55">Center</option>
-                                <option value="6.91">South</option>
-                                <option value="8.29">Negev</option>
-                                <option value="11.1">Eilat & Dead Sea</option>
-                            </select>
-                            </label>
-                          </div>
-                          <label for="interval"class="form-label"
-                                    >Wanted Interval (by days)
-                                    <input
-                                        type="number"
-                                        id="interval"
-                                        class="form-control w-100"
-                                        name="interval"
-                                        min="1"
-                                    />
-                                    </label>
-                                   
-                                    <label for="areaSize"class="form-label"
-                                    >Area Size (Squre meter)
-                                    <input
-                                        id="areaSize"
-                                        type="number"
-                                        class="form-control w-100"
-                                        name="areaSize"
-                                        min="0.1"
-                                        max="99999"
-                                    />
-                                    </label>
-                                    <div class="col-md-6">
-                                      <label for="Drip-distance"class="form-label"
-                                      >Drip distance
-                                       <select id="Drip-distance" name="Drip-distance" class="form-control w-100">
-                                           <option value="0.3">0.3</option>
-                                           <option value="0.5">0.5</option>
-                                           <option value="1.0">1.0</option>
-                                       </select>
-                                      </label>
-                                    </div>
-                                    <div class="col-md-6">
-                                      <label for="dripFlow"class="form-label"
-                                      >Drip Flow
-                                        <select id="dripFlow" name="dripFlow" class="form-control w-100">
-                                            <option value="1.6">1.6</option>
-                                            <option value="2.3">2.3</option>
-                                            <option value="3.5">3.5</option>
-                                        </select>
-                                      </label>
-                                    </div>
-                          <div class="col-md-12">
-                            <a href="somewhere.html" class="btn btn-success w-100">OK</a> <!-- Full width -->
-                          </div>
-                        </form>
-   
-                      </div>
-                    </div> 
-                    <button id="line-btn line-3" class="btn btn-primary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#line-3-collapse" aria-expanded="false" aria-controls="collapse">
-                      line - 3
-                    </button>
-                    <div class="collapse" id="line-3-collapse">
-                      <div class="card card-body card text-bg-dark mb-3">
-                        <form id="line-calculation-1" class="row g-3">
-                          <div class="col-md-12">
-                           
-                            <label for="plantType" class="form-label">Plant Type and maintenance level low-💧 high-💧💧💧</label>
-                            <select id="plantType" name="plantType" class="form-control w-100"> <!-- Full width -->
-                              <option value="">(select one)</option>
-                              <option class="tree" value="0.3">Trees</option>
-                              <option class="roses" value="0.5">Roses 💧💧</option>
-                              <option class="roses" value="0.65">Roses 💧💧💧</option>
-                              <option class="grass" value="0.3">Grass 💧</option>
-                              <option class="grass" value="0.45">Grass 💧💧</option>
-                              <option class="grass" value="0.6">Grass 💧💧💧</option>
-                              <option class="bush" value="0.25">Bush 💧</option>
-                              <option class="bush" value="0.3">Bush 💧💧</option>
-                              <option class="bush" value="0.45">Bush 💧💧💧</option>
-                              <option class="small bush" value="0.5">Small Bush💧💧</option>
-                              <option class="water-wise" value="0.01">Water-wise Plants 💧</option>
-                              <option class="water-wise" value="0.1">Water-wise Plants 💧💧</option>
-                              <option class="water-wise" value="0.2">Water-wise Plants 💧💧💧</option>
-                            </select>
-                          </div>
-                          <div class="col-md-12">
-                            <label id="maintenance-level-1" for="customRange1" class="form-label">Maintenance level</label>
-                            <input type="range" class="form-range " id="customRange1"> <!-- Full width -->
-                          </div>
-                          <div class="col-md-12">  
-                            <label for="location" class="form-label">Location</label>
-   
-                            <select id="location" name="location"  class="form-control w-100">
-                                <option value="">(select one)</option>
-                                <option value="6.47">North</option>
-                                <option value="7.5">Golan Heights & Ahola</option>
-                                <option value="7.96">Emek Bit Shean</option>
-                                <option value="6.55">Center</option>
-                                <option value="6.91">South</option>
-                                <option value="8.29">Negev</option>
-                                <option value="11.1">Eilat & Dead Sea</option>
-                            </select>
-                            </label>
-                          </div>
-                          <label for="interval"class="form-label"
-                                    >Wanted Interval (by days)
-                                    <input
-                                        type="number"
-                                        id="interval"
-                                        class="form-control w-100"
-                                        name="interval"
-                                        min="1"
-                                    />
-                                    </label>
-                                   
-                                    <label for="areaSize"class="form-label"
-                                    >Area Size (Squre meter)
-                                    <input
-                                        id="areaSize"
-                                        type="number"
-                                        class="form-control w-100"
-                                        name="areaSize"
-                                        min="0.1"
-                                        max="99999"
-                                    />
-                                    </label>
-                                    <div class="col-md-6">
-                                      <label for="Drip-distance"class="form-label"
-                                      >Drip distance
-                                       <select id="Drip-distance" name="Drip-distance" class="form-control w-100">
-                                           <option value="0.3">0.3</option>
-                                           <option value="0.5">0.5</option>
-                                           <option value="1.0">1.0</option>
-                                       </select>
-                                      </label>
-                                    </div>
-                                    <div class="col-md-6">
-                                      <label for="dripFlow"class="form-label"
-                                      >Drip Flow
-                                        <select id="dripFlow" name="dripFlow" class="form-control w-100">
-                                            <option value="1.6">1.6</option>
-                                            <option value="2.3">2.3</option>
-                                            <option value="3.5">3.5</option>
-                                        </select>
-                                      </label>
-                                    </div>
-                          <div class="col-md-12">
-                            <a href="somewhere.html" class="btn btn-success w-100">OK</a> <!-- Full width -->
-                          </div>
-                        </form>
-   
-                      </div>
-                    </div>
-                    <button id="line-btn line-4" class="btn btn-primary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#line-4-collapse" aria-expanded="false" aria-controls="collapse">
-                      line - 4
-                    </button>
-                    <div class="collapse" id="line-4-collapse">
-                      <div class="card card-body card text-bg-dark mb-3">
-                        <form id="line-calculation-1" class="row g-3">
-                          <div class="col-md-12">
-                           
-                            <label for="plantType" class="form-label">Plant Type and maintenance level low-💧 high-💧💧💧</label>
-                            <select id="plantType" name="plantType" class="form-control w-100"> <!-- Full width -->
-                              <option value="">(select one)</option>
-                              <option class="tree" value="0.3">Trees</option>
-                              <option class="roses" value="0.5">Roses 💧💧</option>
-                              <option class="roses" value="0.65">Roses 💧💧💧</option>
-                              <option class="grass" value="0.3">Grass 💧</option>
-                              <option class="grass" value="0.45">Grass 💧💧</option>
-                              <option class="grass" value="0.6">Grass 💧💧💧</option>
-                              <option class="bush" value="0.25">Bush 💧</option>
-                              <option class="bush" value="0.3">Bush 💧💧</option>
-                              <option class="bush" value="0.45">Bush 💧💧💧</option>
-                              <option class="small bush" value="0.5">Small Bush💧💧</option>
-                              <option class="water-wise" value="0.01">Water-wise Plants 💧</option>
-                              <option class="water-wise" value="0.1">Water-wise Plants 💧💧</option>
-                              <option class="water-wise" value="0.2">Water-wise Plants 💧💧💧</option>
-                            </select>
-                          </div>
-                          <div class="col-md-12">
-                            <label id="maintenance-level-1" for="customRange1" class="form-label">Maintenance level</label>
-                            <input type="range" class="form-range " id="customRange1"> <!-- Full width -->
-                          </div>
-                          <div class="col-md-12">  
-                            <label for="location" class="form-label">Location</label>
-   
-                            <select id="location" name="location"  class="form-control w-100">
-                                <option value="">(select one)</option>
-                                <option value="6.47">North</option>
-                                <option value="7.5">Golan Heights & Ahola</option>
-                                <option value="7.96">Emek Bit Shean</option>
-                                <option value="6.55">Center</option>
-                                <option value="6.91">South</option>
-                                <option value="8.29">Negev</option>
-                                <option value="11.1">Eilat & Dead Sea</option>
-                            </select>
-                            </label>
-                          </div>
-                          <label for="interval"class="form-label"
-                                    >Wanted Interval (by days)
-                                    <input
-                                        type="number"
-                                        id="interval"
-                                        class="form-control w-100"
-                                        name="interval"
-                                        min="1"
-                                    />
-                                    </label>
-                                   
-                                    <label for="areaSize"class="form-label"
-                                    >Area Size (Squre meter)
-                                    <input
-                                        id="areaSize"
-                                        type="number"
-                                        class="form-control w-100"
-                                        name="areaSize"
-                                        min="0.1"
-                                        max="99999"
-                                    />
-                                    </label>
-                                    <div class="col-md-6">
-                                      <label for="Drip-distance"class="form-label"
-                                      >Drip distance
-                                       <select id="Drip-distance" name="Drip-distance" class="form-control w-100">
-                                           <option value="0.3">0.3</option>
-                                           <option value="0.5">0.5</option>
-                                           <option value="1.0">1.0</option>
-                                       </select>
-                                      </label>
-                                    </div>
-                                    <div class="col-md-6">
-                                      <label for="dripFlow"class="form-label"
-                                      >Drip Flow
-                                        <select id="dripFlow" name="dripFlow" class="form-control w-100">
-                                            <option value="1.6">1.6</option>
-                                            <option value="2.3">2.3</option>
-                                            <option value="3.5">3.5</option>
-                                        </select>
-                                      </label>
-                                    </div>
-                          <div class="col-md-12">
-                            <a href="somewhere.html" class="btn btn-success w-100">OK</a> <!-- Full width -->
-                          </div>
-                        </form>
-   
-                      </div>
-                    </div>
-                    <div class="card-footer border-secondary mb-3">
-                      <small class="text-body-light">total</small>
-                    </div>
-                   
-                </div> 
-              </div> 
-            </div> 
-          </div> 
+    <!-- Main Content -->
+    <div id="main-content" class="col">
+      <div class="album py-5">
+        <div class="container">
+          <div class="row">
+            <div class="col-sm-6 mb-3 mb-sm-0 mt-3">
+              <div class="card">
+                <div class="card-body">
+                 <h5 class="card-title text-white">line 1</h5>
+                 <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+                 <a href="line-controller.html" class="btn btn-primary">Go somewhere</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-6 mt-3">
+              <div class="card">
+                <div class="card-body">
+                 <h5 class="card-title text-white">line 2</h5>
+                 <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+                 <a href="line-controller.html" class="btn btn-primary">Go somewhere</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-6 mt-3">
+              <div class="card">
+                <div class="card-body">
+                 <h5 class="card-title text-white">line 3</h5>
+                 <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+                 <a href="line-controller.html" class="btn btn-primary">Go somewhere</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-6 mt-3">
+              <div class="card">
+                <div class="card-body">
+                 <h5 class="card-title text-white">line 4</h5>
+                 <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+                 <a href="line-controller.html" class="btn btn-primary">Go somewhere</a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div> 
-    <script src="components.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
-  </body>
+      <div class="container">
+        <div class="row">
+          <div class="col">
+            <!-- Upcoming Schedule for all lines -->
+            <div class="card bg-dark text-white border-secondary">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                  <i class="bi bi-clock me-2"></i>Upcoming Irrigation Schedule
+                </h5>
+                <button class="btn btn-outline-light btn-sm">
+                  <i class="bi bi-gear me-1"></i>Manage
+                </button>
+              </div>
+              <div class="card-body p-0">
+                <div class="irrigation-schedule">
+                  <!-- Schedule Item 1 -->
+                  <div class="schedule-item">
+                    <div class="schedule-time">
+                      <div class="time-badge">
+                        <div class="time">06:00</div>
+                        <div class="date">Today</div>
+                      </div>
+                    </div>
+                    <div class="schedule-line"></div>
+                    <div class="schedule-content">
+                      <div class="schedule-header">
+                        <h6 class="mb-1">Line 1 - Rose Garden</h6>
+                        <span class="badge bg-success">Active</span>
+                      </div>
+                      <div class="schedule-details">
+                        <span class="detail-item">
+                          <i class="bi bi-stopwatch me-1"></i>15 min
+                        </span>
+                        <span class="detail-item">
+                          <i class="bi bi-droplet me-1"></i>25L
+                        </span>
+                        <span class="detail-item">
+                          <i class="bi bi-thermometer-half me-1"></i>22°C
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Schedule Item 2 -->
+                  <div class="schedule-item">
+                    <div class="schedule-time">
+                      <div class="time-badge">
+                        <div class="time">06:30</div>
+                        <div class="date">Today</div>
+                      </div>
+                    </div>
+                    <div class="schedule-line"></div>
+                    <div class="schedule-content">
+                      <div class="schedule-header">
+                        <h6 class="mb-1">Line 2 - Vegetable Garden</h6>
+                        <span class="badge bg-warning">Scheduled</span>
+                      </div>
+                      <div class="schedule-details">
+                        <span class="detail-item">
+                          <i class="bi bi-stopwatch me-1"></i>20 min
+                        </span>
+                        <span class="detail-item">
+                          <i class="bi bi-droplet me-1"></i>35L
+                        </span>
+                        <span class="detail-item">
+                          <i class="bi bi-thermometer-half me-1"></i>22°C
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Schedule Item 3 -->
+                  <div class="schedule-item">
+                    <div class="schedule-time">
+                      <div class="time-badge">
+                        <div class="time">18:00</div>
+                        <div class="date">Today</div>
+                      </div>
+                    </div>
+                    <div class="schedule-line"></div>
+                    <div class="schedule-content">
+                      <div class="schedule-header">
+                        <h6 class="mb-1">Line 1 - Rose Garden</h6>
+                        <span class="badge bg-secondary">Pending</span>
+                      </div>
+                      <div class="schedule-details">
+                        <span class="detail-item">
+                          <i class="bi bi-stopwatch me-1"></i>15 min
+                        </span>
+                        <span class="detail-item">
+                          <i class="bi bi-droplet me-1"></i>25L
+                        </span>
+                        <span class="detail-item">
+                          <i class="bi bi-thermometer-half me-1"></i>25°C
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Schedule Item 4 -->
+                  <div class="schedule-item">
+                    <div class="schedule-time">
+                      <div class="time-badge">
+                        <div class="time">06:00</div>
+                        <div class="date">Tomorrow</div>
+                      </div>
+                    </div>
+                    <div class="schedule-line"></div>
+                    <div class="schedule-content">
+                      <div class="schedule-header">
+                        <h6 class="mb-1">Line 2 - Vegetable Garden</h6>
+                        <span class="badge bg-info">Scheduled</span>
+                      </div>
+                      <div class="schedule-details">
+                        <span class="detail-item">
+                          <i class="bi bi-stopwatch me-1"></i>25 min
+                        </span>
+                        <span class="detail-item">
+                          <i class="bi bi-droplet me-1"></i>40L
+                        </span>
+                        <span class="detail-item">
+                          <i class="bi bi-cloud-rain me-1"></i>Rain expected
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Data Visualization Section -->
+      <div class="container mt-4">
+        <div class="row">
+          <!-- Water Usage Chart -->
+          <div class="col-lg-6 mb-4">
+            <div class="card bg-dark text-white border-secondary">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                  <i class="bi bi-droplet-fill me-2"></i>Water Usage (Last 7 Days)
+                </h5>
+                <div class="btn-group" role="group">
+                  <button type="button" class="btn btn-outline-light btn-sm active" data-period="7d">7D</button>
+                  <button type="button" class="btn btn-outline-light btn-sm" data-period="30d">30D</button>
+                </div>
+              </div>
+              <div class="card-body">
+                <canvas id="waterUsageChart" height="300"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Irrigation Performance -->
+          <div class="col-lg-6 mb-4">
+            <div class="card bg-dark text-white border-secondary">
+              <div class="card-header">
+                <h5 class="mb-0">
+                  <i class="bi bi-speedometer2 me-2"></i>Line Performance
+                </h5>
+              </div>
+              <div class="card-body">
+                <canvas id="performanceChart" height="300"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <!-- Weather vs Irrigation -->
+          <div class="col-lg-8 mb-4">
+            <div class="card bg-dark text-white border-secondary">
+              <div class="card-header">
+                <h5 class="mb-0">
+                  <i class="bi bi-cloud-rain me-2"></i>Weather vs Irrigation
+                </h5>
+              </div>
+              <div class="card-body">
+                <canvas id="weatherChart" height="200"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Stats -->
+          <div class="col-lg-4 mb-4">
+            <div class="card bg-dark text-white border-secondary h-100">
+              <div class="card-header">
+                <h5 class="mb-0">
+                  <i class="bi bi-graph-up me-2"></i>Quick Stats
+                </h5>
+              </div>
+              <div class="card-body">
+                <div class="stats-grid">
+                  <div class="stat-item">
+                    <div class="stat-icon">
+                      <i class="bi bi-droplet-fill"></i>
+                    </div>
+                    <div class="stat-content">
+                      <div class="stat-value" id="totalWaterToday">0L</div>
+                      <div class="stat-label">Today's Usage</div>
+                    </div>
+                  </div>
+                  
+                  <div class="stat-item">
+                    <div class="stat-icon">
+                      <i class="bi bi-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                      <div class="stat-value" id="totalTimeToday">0min</div>
+                      <div class="stat-label">Total Runtime</div>
+                    </div>
+                  </div>
+                  
+                  <div class="stat-item">
+                    <div class="stat-icon">
+                      <i class="bi bi-calendar-check"></i>
+                    </div>
+                    <div class="stat-content">
+                      <div class="stat-value" id="completedSessions">0</div>
+                      <div class="stat-label">Completed Today</div>
+                    </div>
+                  </div>
+                  
+                  <div class="stat-item">
+                    <div class="stat-icon">
+                      <i class="bi bi-thermometer-half"></i>
+                    </div>
+                    <div class="stat-content">
+                      <div class="stat-value" id="avgTemperature">--°C</div>
+                      <div class="stat-label">Avg Temperature</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+  <script src="components.js"></script>
+  <script src="charts.js"></script>
+  
+</body>
 </html>
