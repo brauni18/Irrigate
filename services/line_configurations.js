@@ -1,4 +1,4 @@
-const lineConfiguration = require('../models/line_configurations');
+const LineConfiguration = require('../models/line_configurations');
 const Garden = require('../models/garden');
 // Create a new line configuration
 
@@ -28,19 +28,19 @@ const createLine = async (name, gardenId, lineNumber, plantType, maintenanceLeve
     }
 };
 const getAllLines = async () => {
-    return await lineConfiguration.find({}).populate('garden');
+    return await LineConfiguration.find({});
 };
 
 const getLine = async (id) => {
-    return await lineConfiguration.findById(id).populate('garden');
+    return await LineConfiguration.findById(id);
 };
 
 const updateLine = async (id, data) => {
-    return await lineConfiguration.findByIdAndUpdate(id, data, { new: true });
+    return await LineConfiguration.findByIdAndUpdate(id, data, { new: true });
 };
 
 const deleteLine = async (id) => {
-    return await lineConfiguration.findByIdAndDelete(id);
+    return await LineConfiguration.findByIdAndDelete(id);
 };
 
 module.exports = {
