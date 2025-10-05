@@ -26,6 +26,9 @@ const getLines = async (req, res) => {
 const getLine = async (req, res) => {
     try {
         const line = await lineConfigurations.getLine(req.params.id);
+        if (!line) {
+            return res.status(404).json({ error: 'Line configuration not found' });
+        }
         res.status(200).json(line);
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -35,6 +38,9 @@ const updateLine = async (req, res) => {
     try {
         const { name, gardenId, lineNumber, plantType, maintenanceLevel, location, interval, areaSize, dripperSettings, flowRate, calculatedValues } = req.body;
         const line = await lineConfigurations.updateLine(req.params.id, { name, gardenId, lineNumber, plantType, maintenanceLevel, location, interval, areaSize, dripperSettings, flowRate, calculatedValues });
+        if (!line) {
+            return res.status(404).json({ error: 'Line configuration not found' });
+        }
         res.status(200).json(line);
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -43,6 +49,9 @@ const updateLine = async (req, res) => {
 const deleteLine = async (req, res) => {
     try {
         const line = await lineConfigurations.deleteLine(req.params.id);
+        if (!line) {
+            return res.status(404).json({ error: 'Line configuration not found' });
+        }
         res.status(200).json(line);
     } catch (err) {
         res.status(400).json({ error: err.message });
