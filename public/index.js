@@ -20,7 +20,7 @@ const getGardens = async () => {
       const card = document.createElement('div');
       card.className = 'col';
       card.innerHTML = `
-        <a href="irrigation_controller.html?id=${garden._id}" class="text-light text-decoration-none">
+        <a href="irrigation_controller.html?gardenId=${garden._id}" class="text-light text-decoration-none">
           <div class="card h-100 card text-bg-dark border-secondary">
             <img src="${garden.image || 'https://www.thespruce.com/thmb/Y4wxxbBnxIGKK8v4eoI5whUZP2c=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/byladylpergola-f0e18912bd13494682b988bcf37c1265.jpg'}" class="card-img-top" alt="garden image" style="height: 200px; object-fit: cover;">
             <div class="card-body">

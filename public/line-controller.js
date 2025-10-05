@@ -74,7 +74,7 @@ class LineController {
     });
 
     // Calculate button
-    document.getElementById('calculate-btn').addEventListener('click', () => {
+    document.getElementById('calculate-btn').addEventListener('click', (e) => {
       e.preventDefault();
       this.calculateIrrigation();
       this.loadExistingConfiguration();
@@ -265,7 +265,7 @@ class LineController {
       if (!this.lineId) return;
     
       try {
-          const response = await fetch(`/api/line-configurations/${this.lineId}`);
+          const response = await fetch(`/api/line_configurations/${this.lineId}`);
           
           if (response.ok) {
               const config = await response.json();

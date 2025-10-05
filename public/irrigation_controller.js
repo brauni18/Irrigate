@@ -76,14 +76,10 @@ addLinebtn.addEventListener('click', () => {
   deleteBtn.addEventListener('click', async (e) => {
     e.stopPropagation(); // Prevent card click
     e.preventDefault();
-    //delete line configuration from the database
-    fetch(`/api/line-configurations/${lineId}`, {
-      method: 'DELETE'
-    });
     
     if (confirm(`Are you sure you want to delete Line ${lineId}?`)) {
        try {
-                const response = await fetch(`/api/line_configurations/${lineId}`, {  // Use underscore
+                const response = await fetch(`/api/line_configurations/${lineId}`, {
                     method: 'DELETE'
                 });
                 
