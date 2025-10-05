@@ -1,9 +1,6 @@
+const API_lineConfigurations_URL = '/api/line_configurations';
 class LineController {
   constructor() {
-    this.lineId = null;
-    this.lineName = null;
-    this.controllerId = null;
-    
     // Define plant maintenance ranges
     this.plantRanges = {
       'trees': {
@@ -78,15 +75,10 @@ class LineController {
 
     // Calculate button
     document.getElementById('calculate-btn').addEventListener('click', () => {
-      this.calculateIrrigation();
-    });
-
-    // Form submission
-    document.getElementById('line-calculation').addEventListener('submit', (e) => {
       e.preventDefault();
-      this.saveConfiguration();
+      this.calculateIrrigation();
+      this.loadExistingConfiguration();
     });
-
     // Reset button
     document.querySelector('.btn-outline-secondary').addEventListener('click', () => {
       this.resetForm();
@@ -206,7 +198,7 @@ class LineController {
     // Calculate additional metrics
     const waterPerPlant = totalWaterPerInterval / totalDrippers; // L per plant per interval
 
-    // Store calculations for saving
+    // send data to server to save
     this.lastCalculation = {
       duration: durationMinutes,
       waterAmount: totalWaterPerInterval,
@@ -218,8 +210,17 @@ class LineController {
       plantCoefficient: plantCoefficient
     };
 
+    fetch(`${API_lineConfigurations_URL}/${this.lineId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(this.lastCalculation)
+    });
+
     // Display results
     this.displayResults(this.lastCalculation);
+    
   }
 
   displayResults(calc) {
@@ -247,40 +248,6 @@ class LineController {
     document.getElementById('calculated-coefficient').style.display = 'none';
     document.getElementById('coefficient-value').textContent = '--';
   }
-
-  // Enhanced save configuration to include all calculated values
-  saveConfiguration() {
-    if (!this.lastCalculation) {
-      alert('Please calculate first before saving');
-      return;
-    }
-
-    const form = document.getElementById('line-calculation');
-    const formData = new FormData(form);
-    
-    const configData = {
-      //current gardenId + lineId
-      
-      lineId:  this.lineId,
-      plantType: document.getElementById('plantType').value,
-      location: document.getElementById('location').value,
-      interval: document.getElementById('interval').value,
-      areaSize: document.getElementById('areaSize').value,
-      dripDistance: document.getElementById('Drip-distance').value,
-      dripFlow: document.getElementById('dripFlow').value,
-      maintenanceLevel: document.getElementById('customRange1').value,
-      // Add calculated values
-      calculatedDuration: this.lastCalculation.duration,
-      calculatedWaterAmount: this.lastCalculation.waterAmount,
-      totalPlants: this.lastCalculation.totalPlants,
-      pipeLength: this.lastCalculation.pipeLength,
-      totalFlowRate: this.lastCalculation.totalFlowRate
-    };
-
-    console.log('Saving configuration:', configData);
-    alert('Configuration saved successfully!');
-  }
-
   getLineInfo() {
     const urlParams = new URLSearchParams(window.location.search);
     this.lineId = urlParams.get('lineId');
@@ -294,7 +261,42 @@ class LineController {
       document.title = `${this.lineName} - Irrigate`;
     }
   }
+    async loadExistingConfiguration() {
+      if (!this.lineId) return;
+    
+      try {
+          const response = await fetch(`/api/line-configurations/${this.lineId}`);
+          
+          if (response.ok) {
+              const config = await response.json();
+              this.populateFormWithConfig(config);
+          }
+      } catch (error) {
+          console.error('Error loading configuration:', error);
+      }
+  }
+
+  populateFormWithConfig(config) {
+      document.getElementById('plantType').value = config.plantType;
+      document.getElementById('location').value = config.location;
+      document.getElementById('interval').value = config.interval;
+      document.getElementById('areaSize').value = config.areaSize;
+      document.getElementById('Drip-distance').value = config.dripperSettings.distance;
+      document.getElementById('dripFlow').value = config.dripperSettings.flowRate;
+      document.getElementById('customRange1').value = config.maintenanceLevel;
+      document.getElementById('maintenance-value').textContent = config.maintenanceLevel + '%';
+
+      // Update plant type info
+      this.updateMaintenanceRange(config.plantType);
+
+      // Display previous calculation if available
+      if (config.calculatedValues) {
+          this.lastCalculation = config.calculatedValues;
+          this.displayResults(config.calculatedValues);
+      }
+  }
 }
+
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {

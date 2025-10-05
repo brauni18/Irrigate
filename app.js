@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const api_gardens = require('./routers/api_gardens');
-
+const api_line_configurations = require('./routers/api_line_configurations');
 
 
 require('custom-env').env(process.env.NODE_ENV, './config');
@@ -21,5 +21,7 @@ app.use(express.json());
 app.use(express.static('public'));
 app.use('/uploads', express.static('public/uploads'));
 app.use('/api/gardens', api_gardens);
+app.use('/api/line_configurations', api_line_configurations);
+
 
 app.listen(process.env.PORT);

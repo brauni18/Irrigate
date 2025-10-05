@@ -109,8 +109,9 @@
 }
 
 .header-icons .nav-link:hover {
-  background-color: rgba(255,255,255,0.1);
-  color: #007bff;
+  
+  text-shadow: 0 0 8px rgba(102, 194, 255, 0.902); /* Neon blue glow effect */
+  color: rgba(102, 194, 255, 0.902); /* Optional: Change icon color to blue */
   transform: translateY(-1px);
 }
 
@@ -232,14 +233,6 @@
   }
 }
 
-/* .card,
-#plantType,
-#customRange1,
-button,
-a.btn-success {
-  width: 400px; 
-  max-width: 100%; 
-  } */
 
 /* Irrigation Schedule Timeline Styles */
 .irrigation-schedule {
@@ -434,5 +427,73 @@ a.btn-success {
     margin-right: 0;
     margin-bottom: 0.5rem;
   }
+}
+#lines-container {
+  margin-top: 20px;
+  border-radius: 50%;
+  /* border: 1px solid rgba(255, 255, 255, 0.2); */
+}
+/* Line Indicators */
+.line-indicator {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.line-indicator::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Individual Line Colors with Left Borders */
+.line {
+  --line-color: rgba(102, 194, 255, 0.902);
+  border-left: 4px solid rgba(102, 194, 255, 0.902) !important;
+}
+
+
+/* Enhanced hover effects for the left border */
+.line-card.line:hover {
+  border-left: 6px solid rgba(102, 194, 255, 0.902) !important;
+  border-color: rgba(102, 194, 255, 0.902);
+  box-shadow: 0 0 15px rgba(102, 194, 255, 0.902);
+}
+
+
+/* Ensure proper border radius with left border */
+.line-card {
+  border-radius: 15px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.switch-status {
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.delete-line-btn {
+  border: none;
+  padding: 0.25rem 0.5rem;
+}
+
+.delete-line-btn:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+.form-check-input:checked {
+  background-color: #28a745;
+  border-color: #28a745;
 }
 

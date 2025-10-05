@@ -6,7 +6,8 @@
 
       <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-      <link rel="stylesheet" href="styles.css">
+      <link rel="stylesheet" href="line-controller.css">
+      <link rel="stylesheet" href="styles.css" />
       <title>Line Controller - Irrigate</title>
   </head>
   <body>
@@ -104,9 +105,6 @@
                         </div>
                         <div class="text-center mt-2">
                           <span class="badge bg-primary" id="maintenance-value">50%</span>
-                          <small class="d-block text-muted mt-1" id="calculated-coefficient" style="display: none;">
-                            Coefficient: <span class="text-info fw-bold" id="coefficient-value">--</span>
-                          </small>
                         </div>
                       </div>
                     </div>
@@ -186,9 +184,6 @@
                         </button>
                         <button type="button" class="btn btn-info me-md-2" id="calculate-btn">
                           <i class="bi bi-calculator me-1"></i>Calculate
-                        </button>
-                        <button type="submit" class="btn btn-success">
-                          <i class="bi bi-save me-1"></i>Save Configuration
                         </button>
                       </div>
                     </div>

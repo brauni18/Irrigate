@@ -11,12 +11,23 @@ const Garden = new Schema({
         required: true
     },
     image:{type: String},
-    // Irrigation: {
-    //     type: String,
-    // },
-    // Date: {
-    //     type: Date,
-    //     default: Date.now
-    // }
+
+    controller: {
+        name : {
+            type: String,
+            required: true
+        },
+        lineCount :{
+            type: Number,
+        },
+    },
+    Date: {
+        type: Date,
+        default: Date.now
+    },
+    update:{
+        type: Date,
+        default: Date.now
+    }
 });
 module.exports = mongoose.model("Garden", Garden);

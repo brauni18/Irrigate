@@ -1,9 +1,11 @@
 const Garden = require('../models/garden');
-
 // Create a new garden
 const createGarden = async(name, address, image) => {
-  const garden = new Garden({ name:name, address:address, image:image });
-  return await garden.save();
+  const garden = new Garden({ name:name, address:address, image:image, controller: { name: `${name} Controller`, lineCount: 0 } });
+   await garden.save();
+   
+
+  return  garden;
 };
 const getAllGardens = async () => {
   return await Garden.find({});
