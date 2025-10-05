@@ -26,10 +26,7 @@ const createGarden = async (req, res) => {
                 res.status(201).json(garden);
         } catch (err) {
                 res.status(400).json({ error: err.message });
-        }
-        // const garden = await garden_Service.createGarden(req.body.name, req.body.address)
-        // res.json(garden);
-    
+        }    
 };
 
 const updateGarden = async (req, res) => {
