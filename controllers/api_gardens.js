@@ -2,8 +2,12 @@ const garden_Service = require('../services/garden');
 //home page button is going to call the getGardens function
 //plus every time the user creates a garden, it will call this function to update the list
 const getGardens = async (req, res) => {
-  const gardens = await garden_Service.getAllGardens();
-  res.json(gardens);
+  try {
+    const gardens = await garden_Service.getAllGardens();
+    res.json(gardens);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 //getting garden by id for future search
 const getGarden = async (req, res) => {
