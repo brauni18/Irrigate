@@ -6,7 +6,7 @@ const createLine = async (name, gardenId, lineNumber, plantType, maintenanceLeve
     try {
         console.log('Creating line with data:', { name, gardenId, lineNumber, plantType, maintenanceLevel, location, interval, areaSize, dripperSettings }); // Add this
         
-        const lineConfig = new LineConfiguration({
+        const lineConfig = new lineConfiguration({
             name,
             gardenId,
             lineNumber,
