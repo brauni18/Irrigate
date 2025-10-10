@@ -5,8 +5,8 @@ const Garden = require('../models/garden');
 const createLine = async (name, gardenId, lineNumber, plantType, maintenanceLevel, location, interval, areaSize, dripperSettings, flowRate, calculatedValues) => {
     try {
         console.log('Creating line with data:', { name, gardenId, lineNumber, plantType, maintenanceLevel, location, interval, areaSize, dripperSettings }); // Add this
-        
-        const lineConfig = new lineConfiguration({
+
+        const lineConfig = new LineConfiguration({
             name,
             gardenId,
             lineNumber,
@@ -43,9 +43,19 @@ const deleteLine = async (id) => {
     return await LineConfiguration.findByIdAndDelete(id);
 };
 
+// In your service
+const getLinesByGarden = async (gardenId) => {
+    try {
+        return await LineConfiguration.find({ gardenId });
+    } catch (error) {
+        throw new Error(`Error fetching lines for garden: ${error.message}`);
+    }
+};
+
 module.exports = {
     createLine,
     getAllLines,
+    getLinesByGarden, // Add this
     getLine,
     updateLine,
     deleteLine
