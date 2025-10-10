@@ -17,7 +17,15 @@ const createLine = async (req, res) => {
 };
 const getLines = async (req, res) => {
     try {
-        const lines = await lineConfigurations.getAllLines();
+        const { gardenId } = req.query;
+        let lines;
+        
+        if (gardenId) {
+            lines = await lineConfigurations.getLinesByGarden(gardenId);
+        } else {
+            lines = await lineConfigurations.getAllLines();
+        }
+        
         res.status(200).json(lines);
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -63,4 +71,4 @@ module.exports = {
     getLine,
     updateLine,
     deleteLine
-};  
+};
