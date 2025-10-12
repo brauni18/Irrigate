@@ -54,7 +54,7 @@ class LineController {
     this.getLineInfo();
     this.updateLineInfo();
     this.setupEventListeners();
-    // this.loadExistingConfiguration();
+    this.loadExistingConfiguration();
   }
 
   setupEventListeners() {
@@ -77,7 +77,6 @@ class LineController {
     document.getElementById('calculate-btn').addEventListener('click', (e) => {
       e.preventDefault();
       this.calculateIrrigation();
-      this.loadExistingConfiguration();
     });
     // Reset button
     document.querySelector('.btn-outline-secondary').addEventListener('click', () => {
@@ -210,12 +209,29 @@ class LineController {
       plantCoefficient: plantCoefficient
     };
 
+    // Save the complete line configuration including calculated values
+    const plantType = formData.get('plantType');
+    const updateData = {
+      plantType: plantType,
+      maintenanceLevel: maintenanceLevel,
+      location: location,
+      interval: interval,
+      areaSize: areaSize,
+      dripperSettings: {
+        distance: dripDistance,
+        flowRate: dripFlow
+      },
+      calculatedValues: this.lastCalculation
+    };
+
     fetch(`${API_lineConfigurations_URL}/${this.lineId}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(this.lastCalculation)
+      body: JSON.stringify(updateData)
+    }).catch(error => {
+      console.error('Error saving configuration:', error);
     });
 
     // Display results
