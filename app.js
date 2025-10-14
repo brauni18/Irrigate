@@ -4,6 +4,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const api_gardens = require('./routers/api_gardens');
 const api_line_configurations = require('./routers/api_line_configurations');
+const api_irrigation_calculator = require('./routers/api_irrigation_calculator');
 
 
 require('custom-env').env(process.env.NODE_ENV, './config');
@@ -22,6 +23,7 @@ app.use(express.static('public'));
 app.use('/uploads', express.static('public/uploads'));
 app.use('/api/gardens', api_gardens);
 app.use('/api/line_configurations', api_line_configurations);
+app.use('/api/calculate_irrigation', api_irrigation_calculator);
 
 
 app.listen(process.env.PORT);
