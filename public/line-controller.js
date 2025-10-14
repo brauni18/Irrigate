@@ -160,12 +160,12 @@ class LineController {
     return plant.minCoeff + (normalizedLevel * (plant.maxCoeff - plant.minCoeff));
   }
 
-  calculateIrrigation() {
+  async calculateIrrigation() {
     const form = document.getElementById('line-calculation');
     const formData = new FormData(form);
     
     // Get values
-    const plantCoefficient = this.getPlantCoefficient(); // Use dynamic coefficient
+    const plantType = formData.get('plantType');
     const location = parseFloat(formData.get('location')) || 0;
     const interval = parseInt(formData.get('interval')) || 1;
     const areaSize = parseFloat(formData.get('areaSize')) || 0;
@@ -174,69 +174,66 @@ class LineController {
     const maintenanceLevel = parseInt(document.getElementById('customRange1').value) || 50;
 
     // Validate inputs
-    if (!plantCoefficient || !location || !areaSize) {
+    if (!plantType || !location || !areaSize) {
       alert('Please fill in all required fields');
       return;
     }
 
-    // Calculate irrigation needs - simplified since maintenance is already in coefficient
-    const waterNeed = plantCoefficient * location; // L/m²/day
-    const totalWaterPerDay = waterNeed * areaSize;
-    const totalWaterPerInterval = totalWaterPerDay * interval;
-    
-    // Calculate drippers and duration
-    const drippersPerM2 = 1 / (dripDistance * dripDistance);
-    const totalDrippers = Math.ceil(drippersPerM2 * areaSize);
-    const totalFlowRate = totalDrippers * dripFlow; // L/h
-    const durationHours = totalWaterPerInterval / totalFlowRate;
-    const durationMinutes = Math.round(durationHours * 60);
+    try {
+      // Call backend API to calculate irrigation
+      const response = await fetch('/api/calculate_irrigation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          plantType,
+          maintenanceLevel,
+          location,
+          interval,
+          areaSize,
+          dripDistance,
+          dripFlow
+        })
+      });
 
-    // Calculate pipe length
-    const pipeLength = totalDrippers * dripDistance; // meters
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Calculation failed');
+      }
 
-    // Calculate additional metrics
-    const waterPerPlant = totalWaterPerInterval / totalDrippers; // L per plant per interval
+      this.lastCalculation = await response.json();
 
-    // send data to server to save
-    this.lastCalculation = {
-      duration: durationMinutes,
-      waterAmount: totalWaterPerInterval,
-      frequency: interval,
-      totalPlants: totalDrippers,
-      pipeLength: pipeLength,
-      totalFlowRate: totalFlowRate,
-      waterPerPlant: waterPerPlant,
-      plantCoefficient: plantCoefficient
-    };
+      // Save the complete line configuration including calculated values
+      const updateData = {
+        plantType: plantType,
+        maintenanceLevel: maintenanceLevel,
+        location: location,
+        interval: interval,
+        areaSize: areaSize,
+        dripperSettings: {
+          distance: dripDistance,
+          flowRate: dripFlow
+        },
+        calculatedValues: this.lastCalculation
+      };
 
-    // Save the complete line configuration including calculated values
-    const plantType = formData.get('plantType');
-    const updateData = {
-      plantType: plantType,
-      maintenanceLevel: maintenanceLevel,
-      location: location,
-      interval: interval,
-      areaSize: areaSize,
-      dripperSettings: {
-        distance: dripDistance,
-        flowRate: dripFlow
-      },
-      calculatedValues: this.lastCalculation
-    };
+      fetch(`${API_lineConfigurations_URL}/${this.lineId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateData)
+      }).catch(error => {
+        console.error('Error saving configuration:', error);
+      });
 
-    fetch(`${API_lineConfigurations_URL}/${this.lineId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(updateData)
-    }).catch(error => {
-      console.error('Error saving configuration:', error);
-    });
-
-    // Display results
-    this.displayResults(this.lastCalculation);
-    
+      // Display results
+      this.displayResults(this.lastCalculation);
+    } catch (error) {
+      console.error('Error calculating irrigation:', error);
+      alert('Failed to calculate irrigation: ' + error.message);
+    }
   }
 
   displayResults(calc) {
