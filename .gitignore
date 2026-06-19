@@ -1,0 +1,12 @@
+.env
+
+.env.production/
+.env.development/
+
+frontend/.env
+backend/.env
+
+frontend/.env.development/
+backend/.env.production/
+
+additional_files/
