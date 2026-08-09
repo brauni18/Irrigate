@@ -1,6 +1,6 @@
 import { SocketProvider } from '@/sockets/SocketProvider';
 import { useMemo } from 'react';
-import { Outlet } from 'react-router';
+import { AppLayout } from '@/ui/components/AppLayout';
 
 export function Root() {
   // insert urls to create a socket connection to here
@@ -8,7 +8,7 @@ export function Root() {
 
   return (
     <SocketProvider urls={socketUrls}>
-      <Outlet />
+      <AppLayout />
     </SocketProvider>
   );
 }
