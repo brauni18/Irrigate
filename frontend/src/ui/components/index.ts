@@ -1,4 +1,5 @@
 export { AppLayout } from '@/ui/components/AppLayout';
+export { GardenDialog } from '@/ui/components/GardenDialog';
 export { InfoCard } from '@/ui/components/InfoCard';
 export type { InfoCardProps } from '@/types/InfoCardTypes';
 export { Navbar } from '@/ui/components/Navbar/Navbar';

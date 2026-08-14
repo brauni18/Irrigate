@@ -11,4 +11,7 @@ export type InfoCardProps = {
   icon?: LucideIcon;
   badge?: string;
   actionLabel?: string;
+  updatedAt?: string;
+  onEdit?: () => void;
+  onDelete?: () => void;
 };

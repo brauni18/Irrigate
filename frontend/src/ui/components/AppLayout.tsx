@@ -1,12 +1,25 @@
-import { useState } from 'react';
-import { Outlet } from 'react-router';
+import { useRef, useState } from 'react';
+import { Outlet, useLocation } from 'react-router';
+import { useGSAP } from '@gsap/react';
 import { Navbar } from '@/ui/components/Navbar/Navbar';
 import { Sidebar } from '@/ui/components/Sidebar/Sidebar';
 import { cn } from '@/shadcn/lib/utils';
+import { animatePageEnter } from '@/utils/gsapAnimations';
 
 export function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mainRefreshKey, setMainRefreshKey] = useState(0);
+  const location = useLocation();
+  const pageContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useGSAP(
+    () => {
+      if (!pageContainerRef.current) return;
+      animatePageEnter(pageContainerRef.current);
+    },
+    { dependencies: [location.pathname, mainRefreshKey], scope: pageContainerRef, revertOnUpdate: true },
+  );
 
   const toggleSidebar = () => {
     if (window.matchMedia('(min-width: 768px)').matches) {
@@ -18,7 +31,10 @@ export function AppLayout() {
 
   return (
     <div className="bg-background flex h-svh flex-col overflow-hidden">
-      <Navbar onMenuClick={toggleSidebar} />
+      <Navbar
+        onMenuClick={toggleSidebar}
+        onGardenCreated={() => setMainRefreshKey((prev) => prev + 1)}
+      />
 
       <div className="relative flex min-h-0 flex-1">
         {mobileSidebarOpen && (
@@ -44,8 +60,10 @@ export function AppLayout() {
           />
         </div>
 
-        <main className="min-w-0 flex-1 overflow-auto p-4 sm:p-6">
-          <Outlet />
+        <main key={mainRefreshKey} className="min-w-0 flex-1 overflow-auto p-4 sm:p-6">
+          <div ref={pageContainerRef} className="min-h-full will-change-transform">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

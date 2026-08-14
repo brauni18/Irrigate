@@ -1,10 +1,32 @@
 import express, { type NextFunction, type Request, type Response } from 'express';
+import path from 'node:path';
 import 'dotenv/config';
 import { connectToMongoDB, startServer } from './utils.js';
-import { usersRouter } from './routes/users.routes.js';
-import { postsRouter } from './routes/posts.routes.js';
+import { gardensRouter } from './routes/gardens.routes.js';
+import { irrigationLinesRouter } from './routes/irrigationLines.routes.js';
+import { irrigationRouter } from './routes/irrigation.routes.js';
 import cors from 'cors';
 import helmet from 'helmet';
+
+const configuredOrigins =
+  process.env.FRONTEND_URL ?? process.env.frontendUrl ?? 'http://localhost:5173,http://127.0.0.1:5173';
+
+const allowedOrigins = configuredOrigins
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const uploadsDirectory = path.resolve(import.meta.dirname, '../uploads');
+
+function isLocalDevOrigin(origin: string) {
+  try {
+    const url = new URL(origin);
+    return url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
 // create a new express application
 const app = express();
 
@@ -16,7 +38,13 @@ app.use(helmet());
 // credentials: true means that the browser will send the credentials (cookies, authentication tokens, etc.) to the backend
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin: (origin, callback) => {
+      // Allow tools/requests without browser origin (e.g., curl, Postman).
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      if (isLocalDevOrigin(origin)) return callback(null, true);
+      return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   }),
 );
@@ -34,10 +62,18 @@ apiRouter.get('/health', (_req, res) => {
   res.json({ ok: true });
 });
 
-apiRouter.use('/users', usersRouter);
-apiRouter.use('/posts', postsRouter);
+apiRouter.use('/gardens', gardensRouter);
+apiRouter.use('/gardens/:gardenId/lines', irrigationLinesRouter);
+apiRouter.use('/irrigation', irrigationRouter);
 
 app.use('/api', apiRouter);
+
+// Cross-Origin-Resource-Policy must be 'cross-origin' so browsers on the frontend
+// origin can load images served from this backend origin (helmet sets same-origin by default).
+app.use('/uploads', (_req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(uploadsDirectory));
 
 app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
 

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Droplets, Menu, Bell, Plus, Bot, Search } from 'lucide-react';
 import { Link } from 'react-router';
 import { Button } from '@/shadcn/components/ui/button';
@@ -8,14 +9,24 @@ import {
 } from '@/consts/Navbar.consts';
 import { ROUTES } from '@/router/routes.consts';
 import type { NavbarProps } from '@/types/Navbar.types';
+import { GardenDialog } from '@/ui/components/GardenDialog';
 
 export function Navbar({
   title = DEFAULT_NAVBAR_TITLE,
   onMenuClick,
+  onGardenCreated,
   className,
   showMenuButton = DEFAULT_SHOW_MENU_BUTTON
 }: NavbarProps) {
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
   return (
+    <>
+      <GardenDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onCreated={onGardenCreated}
+      />
     <header
       className={cn(
         'bg-background/95 supports-backdrop-filter:bg-background/80 sticky top-0 z-40 flex h-14 w-full items-center gap-3 border-b px-3 backdrop-blur sm:px-4',
@@ -57,7 +68,7 @@ export function Navbar({
       </div>
 
       <div className="flex items-center gap-4">
-        <Button type="button" variant="ghost" size="icon" aria-label="New">
+        <Button type="button" variant="ghost" size="icon" aria-label="New" onClick={() => setCreateDialogOpen(true)}>
           <Plus className="size-5" />
         </Button>
         <Button type="button" variant="ghost" size="icon" aria-label="Notifications">
@@ -68,5 +79,6 @@ export function Navbar({
         </Button>
       </div>
     </header>
+    </>
   );
 }
