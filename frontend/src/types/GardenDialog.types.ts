@@ -15,3 +15,17 @@ export type GardenDialogErrors = {
   name?: string;
   address?: string;
 };
+
+export type GardenLocationMatch = {
+  label: string;
+  latitude: number;
+  longitude: number;
+  country?: string;
+};
+
+export type GardenGeocodeResult = {
+  name: string;
+  country?: string;
+  latitude: number;
+  longitude: number;
+};

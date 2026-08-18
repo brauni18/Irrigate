@@ -6,26 +6,12 @@ import {
   ChevronRight,
   Droplets,
   FlaskConical,
-  Leaf,
   Plus,
   Settings2,
-  Thermometer,
   Wind,
 } from 'lucide-react';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
 import { Button } from '@/shadcn/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shadcn/components/ui/card';
+import { Card, CardContent } from '@/shadcn/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -44,13 +30,13 @@ import {
 } from '@/store/apis/irrigationLines.api';
 import {
   DEFAULT_SCHEDULE_RULES,
-  LINE_PERFORMANCE_COLORS,
   SCHEDULE_FUTURE_DAYS,
   SCHEDULE_HISTORY_DAYS,
   buildScheduleWindow,
   type ScheduleRules,
 } from '@/consts/GardenPage.consts';
 import { WeatherWidget } from './GardenPage/WeatherWidget';
+import { AnalyticsSection } from './GardenPage/AnalyticsSection';
 import { IrrigationLineCard } from './GardenPage/IrrigationLineCard';
 import { AddLineDialog } from './GardenPage/AddLineDialog';
 import { ScheduleRulesDialog } from './GardenPage/ScheduleRulesDialog';
@@ -118,18 +104,6 @@ export function GardenPage() {
     { dependencies: [id], scope: contentRef, revertOnUpdate: true },
   );
 
-  const linePerformanceData = lines
-    .filter((line) => line.config)
-    .map((line, i) => {
-      const plantCount = getLinePlantCount(line);
-
-      return {
-        name: line.name,
-        value: plantCount,
-        color: LINE_PERFORMANCE_COLORS[i % LINE_PERFORMANCE_COLORS.length],
-      };
-    });
-
   const totalPlants = lines.reduce((sum, line) => sum + getLinePlantCount(line), 0);
   const totalHoseLengthMeters = lines.reduce((sum, line) => {
     const dripCount = line.calculation?.dripPresCount ?? 0;
@@ -143,21 +117,6 @@ export function GardenPage() {
     return sum + litersPerRun * (365 / intervalDays);
   }, 0);
   const scheduleReferenceDate = new Date();
-
-  const usagePeriodDays = usagePeriod === 'weekly' ? 7 : usagePeriod === 'monthly' ? 30 : 365;
-
-  const waterUsageByLineData = lines
-    .filter((line) => line.calculation && line.config)
-    .map((line) => {
-      const litersPerRun = (line.calculation?.waterPortion ?? 0) * 1000;
-      const intervalDays = Math.max(1, Math.floor(line.config?.intervalDays ?? 1));
-      const estimatedRuns = Math.max(1, Math.ceil(usagePeriodDays / intervalDays));
-
-      return {
-        lineName: line.name,
-        liters: Number((litersPerRun * estimatedRuns).toFixed(1)),
-      };
-    });
 
   async function handleAddLine(name: string, config: IrrigationLineConfig) {
     await createLine({ gardenId: id!, name, config }).unwrap();
@@ -280,7 +239,7 @@ export function GardenPage() {
 
   if (gardenLoading) {
     return (
-      <div className="flex min-h-[340px] items-center justify-center p-6">
+      <div className="flex min-h-85 items-center justify-center p-6">
         <div className="w-full max-w-xl space-y-4 rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-muted/80" />
@@ -385,7 +344,7 @@ export function GardenPage() {
             ))}
           </div>
         ) : lines.length === 0 ? (
-          <Card className="border-dashed border-border/80 bg-gradient-to-br from-background to-muted/20">
+          <Card className="border-dashed border-border/80 bg-linear-to-br from-background to-muted/20">
             <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <Droplets className="h-5 w-5" />
@@ -516,130 +475,15 @@ export function GardenPage() {
         </Card>
       </section>
 
-      {/* 4. analytics */}
-      <section data-animate="section" className="space-y-4">
-        <h2 className="flex items-center gap-2 text-lg font-semibold">
-          <Thermometer className="h-5 w-5" />
-          Analytics
-        </h2>
-
-        <div className="grid gap-4 lg:grid-cols-2">
-          {/* line performance donut */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Leaf className="h-4 w-4" /> Plants per Line
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {linePerformanceData.length === 0 ? (
-                <div className="text-muted-foreground flex h-50 items-center justify-center text-sm">
-                  No lines to display
-                </div>
-              ) : (
-                <>
-                  <ResponsiveContainer width="100%" height={180}>
-                    <PieChart>
-                      <Pie
-                        data={linePerformanceData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={55}
-                        outerRadius={80}
-                        paddingAngle={3}
-                        dataKey="value"
-                      >
-                        {linePerformanceData.map((entry, index) => (
-                          <Cell key={index} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(v, name) => [`${v} plants`, name]} contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1">
-                    {linePerformanceData.map((entry) => (
-                      <span key={entry.name} className="flex items-center gap-1.5 text-xs">
-                        <span className="h-2.5 w-2.5 rounded-full" style={{ background: entry.color }} />
-                        {entry.name}
-                      </span>
-                    ))}
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* water usage by line */}
-          <Card>
-            <CardHeader className="flex flex-col gap-3 pb-2 sm:flex-row sm:items-center sm:justify-between">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Droplets className="h-4 w-4" /> Line Water Usage
-              </CardTitle>
-              <div className="inline-flex rounded-xl border border-border bg-muted/40 p-1 text-xs shadow-sm">
-                {([
-                  { label: 'Weekly', value: 'weekly' },
-                  { label: 'Monthly', value: 'monthly' },
-                  { label: 'Yearly', value: 'yearly' },
-                ] as const).map((period) => (
-                  <button
-                    key={period.value}
-                    type="button"
-                    aria-pressed={usagePeriod === period.value}
-                    onClick={() => setUsagePeriod(period.value)}
-                    className={`rounded-lg px-3 py-1.5 font-medium transition-all ${usagePeriod === period.value ? 'bg-background text-foreground shadow-sm ring-1 ring-border/80' : 'text-muted-foreground hover:bg-background/65 hover:text-foreground'}`}
-                  >
-                    {period.label}
-                  </button>
-                ))}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {waterUsageByLineData.length === 0 ? (
-                <div className="text-muted-foreground flex h-50 items-center justify-center text-sm">
-                  No line usage data to display
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={waterUsageByLineData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="lineName" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" interval={0} angle={-10} textAnchor="end" height={40} />
-                    <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${v}L`} />
-                    <Tooltip formatter={(v) => [`${v}L`, 'Water usage']} contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
-                    <Bar dataKey="liters" name="Water usage (L)" fill="#60a5fa" opacity={0.8} radius={[3, 3, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* quick stats */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base">
-                Garden Summary
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { icon: Droplets, label: 'Yearly Water Usage', value: `${Math.round(yearlyWaterUsageLiters).toLocaleString()}L`, color: 'text-blue-400' },
-                  { icon: FlaskConical, label: 'Number of Plants', value: Math.round(totalPlants).toLocaleString(), color: 'text-emerald-400' },
-                  { icon: Wind, label: 'Pipe/Hose Length', value: `${totalHoseLengthMeters.toFixed(1)}m`, color: 'text-sky-400' },
-                  { icon: Thermometer, label: 'Garden Area', value: `${totalGardenAreaM2.toFixed(1)}m²`, color: 'text-orange-400' },
-                ].map(({ icon: Icon, label, value, color }) => (
-                  <div key={label} className="bg-muted/50 flex items-center gap-3 rounded-xl p-4">
-                    <Icon className={`h-6 w-6 shrink-0 ${color}`} />
-                    <div>
-                      <p className="text-lg font-bold leading-tight">{value}</p>
-                      <p className="text-muted-foreground text-xs">{label}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+      <AnalyticsSection
+        lines={lines}
+        usagePeriod={usagePeriod}
+        onUsagePeriodChange={setUsagePeriod}
+        yearlyWaterUsageLiters={yearlyWaterUsageLiters}
+        totalPlants={totalPlants}
+        totalHoseLengthMeters={totalHoseLengthMeters}
+        totalGardenAreaM2={totalGardenAreaM2}
+      />
 
       <AddLineDialog
         open={addLineOpen}

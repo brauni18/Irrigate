@@ -1,6 +1,28 @@
+import type { IrrigationLineConfig, SprinklerConfig } from '@/types/irrigationLine.type';
+
 export const ADD_LINE_REQUIRED_NAME_MESSAGE = 'Line name is required';
 export const ADD_LINE_DIALOG_TITLE = 'Add Irrigation Line';
 export const ADD_LINE_PLACEHOLDER = 'e.g. Rose Garden';
+
+export const DEFAULT_ADD_LINE_CONFIG: IrrigationLineConfig = {
+  plantKey: 'bush',
+  maintenanceLevel: 0,
+  locationKey: 'north',
+  intervalDays: 7,
+  areaSizeM2: 4,
+  treeCount: 1,
+  techniqueKey: 'drip',
+  techniqueConfig: {
+    distance: 0.5,
+    flowRate: 2.3,
+  },
+};
+
+export const DEFAULT_SPRINKLER_CONFIG: SprinklerConfig = {
+  distance: 6,
+  flowRate: 30,
+  sprinklerCount: 1,
+};
 
 export const PLANT_TYPE_OPTIONS = [
   { value: 'trees',       label: '🌳 Trees',              description: 'Deep-rooted, drought tolerant once established', measurementMode: 'count', areaPerUnitM2: 4, recommendedIntervalDays: 7 },
@@ -25,12 +47,22 @@ export const DRIP_DISTANCE_OPTIONS = [
   { value: '0.3', label: '0.3 m' },
   { value: '0.5', label: '0.5 m' },
   { value: '1.0', label: '1.0 m' },
- 
- 
 ];
 
 export const DRIP_FLOW_OPTIONS = [
   { value: '1.6', label: '1.6 L/h' },
   { value: '2.3', label: '2.3 L/h' },
   { value: '3.5', label: '3.5 L/h' },
+];
+
+export const SPRINKLER_DISTANCE_OPTIONS = [
+  { value: '4', label: '4 m' },
+  { value: '6', label: '6 m' },
+  { value: '8', label: '8 m' },
+];
+
+export const SPRINKLER_FLOW_OPTIONS = [
+  { value: '20', label: '20 L/h' },
+  { value: '30', label: '30 L/h' },
+  { value: '45', label: '45 L/h' },
 ];

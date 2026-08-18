@@ -1,3 +1,16 @@
+export type IrrigationTechniqueCatalog = {
+  key: 'drip' | 'sprinkler';
+  name: string;
+  distanceOptions: number[];
+  flowOptions: number[];
+};
+
+export type SprinklerConfig = {
+  distance: number;
+  flowRate: number;
+  sprinklerCount: number;
+};
+
 export type IrrigationLineConfig = {
   plantKey: string;
   maintenanceLevel: number; // 0–100
@@ -5,10 +18,12 @@ export type IrrigationLineConfig = {
   intervalDays: number;
   areaSizeM2: number;
   treeCount?: number;
-  techniqueKey: 'drip';
+  sprinklerCount?: number;
+  sprinklerConfigs?: SprinklerConfig[];
+  techniqueKey: 'drip' | 'sprinkler';
   techniqueConfig: {
-    distance: number;       // meters between drippers (default 0.5)
-    flowRate: number;       // L/h per dripper (default 2.3)
+    distance: number;       // meters between drippers/sprinkler spacing (default 0.5/4)
+    flowRate: number;       // L/h per emitter/head (default 2.3/30)
   };
 };
 
@@ -46,17 +61,10 @@ export type LocationCatalogItem = {
   coeff: number;
 };
 
-export type DripTechniqueCatalog = {
-  key: 'drip';
-  name: string;
-  distanceOptions: number[];
-  flowOptions: number[];
-};
-
 export type IrrigationCatalogResponse = {
   plants: PlantCatalogItem[];
   locations: LocationCatalogItem[];
-  techniques: DripTechniqueCatalog[];
+  techniques: IrrigationTechniqueCatalog[];
 };
 
 export type CalculateIrrigationResponse = {

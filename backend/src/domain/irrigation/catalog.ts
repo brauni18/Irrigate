@@ -16,8 +16,8 @@ export type LocationCatalogItem = {
   coeff: number;
 };
 
-export type DripTechniqueCatalog = {
-  key: 'drip';
+export type TechniqueCatalog = {
+  key: 'drip' | 'sprinkler';
   name: string;
   distanceOptions: number[];
   flowOptions: number[];
@@ -92,17 +92,24 @@ export const LOCATIONS_CATALOG: Record<string, LocationCatalogItem> = {
   eilat_dead_sea: { key: 'eilat_dead_sea', name: 'Eilat & Dead Sea', coeff: 11.1 },
 };
 
-export const DRIP_TECHNIQUE_CATALOG: DripTechniqueCatalog = {
+export const DRIP_TECHNIQUE_CATALOG: TechniqueCatalog = {
   key: 'drip',
   name: 'Drip Irrigation',
   distanceOptions: [0.3, 0.5, 1.0],
   flowOptions: [1.6, 2.3, 3.5],
 };
 
+export const SPRINKLER_TECHNIQUE_CATALOG: TechniqueCatalog = {
+  key: 'sprinkler',
+  name: 'Sprinkler Irrigation',
+  distanceOptions: [4, 6, 8],
+  flowOptions: [20, 30, 45],
+};
+
 export function getIrrigationCatalog() {
   return {
     plants: Object.values(PLANTS_CATALOG),
     locations: Object.values(LOCATIONS_CATALOG),
-    techniques: [DRIP_TECHNIQUE_CATALOG],
+    techniques: [DRIP_TECHNIQUE_CATALOG, SPRINKLER_TECHNIQUE_CATALOG],
   };
 }

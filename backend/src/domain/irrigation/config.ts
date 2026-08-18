@@ -1,8 +1,19 @@
-import { DRIP_TECHNIQUE_CATALOG, LOCATIONS_CATALOG, PLANTS_CATALOG } from './catalog.js';
+import {
+  DRIP_TECHNIQUE_CATALOG,
+  LOCATIONS_CATALOG,
+  PLANTS_CATALOG,
+  SPRINKLER_TECHNIQUE_CATALOG,
+} from './catalog.js';
 
-export type DripTechniqueConfig = {
+export type TechniqueConfig = {
   distance: number;
   flowRate: number;
+};
+
+export type SprinklerConfig = {
+  distance: number;
+  flowRate: number;
+  sprinklerCount: number;
 };
 
 export type IrrigationLineConfig = {
@@ -12,8 +23,10 @@ export type IrrigationLineConfig = {
   intervalDays: number;
   areaSizeM2: number;
   treeCount?: number;
-  techniqueKey: 'drip';
-  techniqueConfig: DripTechniqueConfig;
+  sprinklerCount?: number;
+  sprinklerConfigs?: SprinklerConfig[];
+  techniqueKey: 'drip' | 'sprinkler';
+  techniqueConfig: TechniqueConfig;
 };
 
 export const DEFAULT_IRRIGATION_LINE_CONFIG: IrrigationLineConfig = {
@@ -30,7 +43,7 @@ export const DEFAULT_IRRIGATION_LINE_CONFIG: IrrigationLineConfig = {
 };
 
 export type IrrigationLineConfigPatch = Partial<Omit<IrrigationLineConfig, 'techniqueConfig'>> & {
-  techniqueConfig?: Partial<DripTechniqueConfig>;
+  techniqueConfig?: Partial<TechniqueConfig>;
 };
 
 export function mergeIrrigationConfig(
@@ -67,7 +80,89 @@ function getNormalizedTreeCount(config: IrrigationLineConfig) {
   return Math.max(1, Math.round(config.areaSizeM2 / areaPerUnitM2));
 }
 
+function getNormalizedSprinklerCount(config: IrrigationLineConfig) {
+  if (Number.isFinite(config.sprinklerCount) && (config.sprinklerCount ?? 0) > 0) {
+    return Math.max(1, Math.round(config.sprinklerCount ?? 0));
+  }
+
+  const distance = config.techniqueConfig.distance;
+  if (!Number.isFinite(distance) || distance <= 0) {
+    return undefined;
+  }
+
+  if (!Number.isFinite(config.areaSizeM2) || config.areaSizeM2 <= 0) {
+    return undefined;
+  }
+
+  return Math.max(1, Math.round(config.areaSizeM2 / distance ** 2));
+}
+
+function getNormalizedSprinklerConfigs(config: IrrigationLineConfig) {
+  if (!config.sprinklerConfigs || config.sprinklerConfigs.length === 0) {
+    return undefined;
+  }
+
+  return config.sprinklerConfigs.map((sprinkler) => ({
+    distance: sprinkler.distance,
+    flowRate: sprinkler.flowRate,
+    sprinklerCount: Math.max(1, Math.round(sprinkler.sprinklerCount)),
+  }));
+}
+
+function aggregateSprinklerConfigs(sprinklerConfigs: SprinklerConfig[]) {
+  const totalSprinklerCount = sprinklerConfigs.reduce((sum, sprinkler) => sum + sprinkler.sprinklerCount, 0);
+  const totalFlowRate = sprinklerConfigs.reduce(
+    (sum, sprinkler) => sum + sprinkler.flowRate * sprinkler.sprinklerCount,
+    0,
+  );
+  const totalWeightedDistance = sprinklerConfigs.reduce(
+    (sum, sprinkler) => sum + sprinkler.distance * sprinkler.sprinklerCount,
+    0,
+  );
+
+  const averageFlowRate = totalSprinklerCount > 0 ? totalFlowRate / totalSprinklerCount : 0;
+  const averageDistance = totalSprinklerCount > 0 ? totalWeightedDistance / totalSprinklerCount : 0;
+
+  return {
+    totalSprinklerCount,
+    averageFlowRate,
+    averageDistance,
+  };
+}
+
 export function normalizeIrrigationConfig(config: IrrigationLineConfig): IrrigationLineConfig {
+  if (config.techniqueKey === 'sprinkler') {
+    const sprinklerConfigs = getNormalizedSprinklerConfigs(config);
+
+    if (sprinklerConfigs && sprinklerConfigs.length > 0) {
+      const aggregate = aggregateSprinklerConfigs(sprinklerConfigs);
+
+      if (aggregate.totalSprinklerCount <= 0) {
+        return config;
+      }
+
+      return {
+        ...config,
+        sprinklerConfigs,
+        sprinklerCount: aggregate.totalSprinklerCount,
+        techniqueConfig: {
+          distance: aggregate.averageDistance,
+          flowRate: aggregate.averageFlowRate,
+        },
+      };
+    }
+
+    const sprinklerCount = getNormalizedSprinklerCount(config);
+    if (!sprinklerCount) {
+      return config;
+    }
+
+    return {
+      ...config,
+      sprinklerCount,
+    };
+  }
+
   const plant = PLANTS_CATALOG[config.plantKey];
   if (plant?.measurementMode !== 'count') {
     return config;
@@ -126,17 +221,49 @@ export function validateIrrigationConfig(config: IrrigationLineConfig): string[]
     }
   }
 
-  if (normalized.techniqueKey !== DRIP_TECHNIQUE_CATALOG.key) {
+  if (normalized.techniqueKey === 'sprinkler') {
+    if (!Number.isFinite(normalized.sprinklerCount) || (normalized.sprinklerCount ?? 0) <= 0) {
+      errors.push('sprinklerCount must be a number greater than 0');
+    }
+
+    if (normalized.sprinklerConfigs && normalized.sprinklerConfigs.length > 0) {
+      normalized.sprinklerConfigs.forEach((sprinkler, index) => {
+        if (!Number.isFinite(sprinkler.sprinklerCount) || sprinkler.sprinklerCount <= 0) {
+          errors.push(`sprinklerConfigs[${index}].sprinklerCount must be a number greater than 0`);
+        }
+
+        if (!SPRINKLER_TECHNIQUE_CATALOG.distanceOptions.includes(sprinkler.distance)) {
+          errors.push(`sprinklerConfigs[${index}].distance has invalid sprinkler option`);
+        }
+
+        if (!SPRINKLER_TECHNIQUE_CATALOG.flowOptions.includes(sprinkler.flowRate)) {
+          errors.push(`sprinklerConfigs[${index}].flowRate has invalid sprinkler option`);
+        }
+      });
+    }
+  }
+
+  const activeTechniqueCatalog = normalized.techniqueKey === 'sprinkler'
+    ? SPRINKLER_TECHNIQUE_CATALOG
+    : DRIP_TECHNIQUE_CATALOG;
+
+  if (normalized.techniqueKey !== activeTechniqueCatalog.key) {
     errors.push('Invalid techniqueKey');
     return errors;
   }
 
-  if (!DRIP_TECHNIQUE_CATALOG.distanceOptions.includes(normalized.techniqueConfig.distance)) {
-    errors.push('Invalid drip distance option');
+  if (
+    !(normalized.techniqueKey === 'sprinkler' && normalized.sprinklerConfigs && normalized.sprinklerConfigs.length > 0)
+    && !activeTechniqueCatalog.distanceOptions.includes(normalized.techniqueConfig.distance)
+  ) {
+    errors.push(`Invalid ${activeTechniqueCatalog.key} distance option`);
   }
 
-  if (!DRIP_TECHNIQUE_CATALOG.flowOptions.includes(normalized.techniqueConfig.flowRate)) {
-    errors.push('Invalid drip flow option');
+  if (
+    !(normalized.techniqueKey === 'sprinkler' && normalized.sprinklerConfigs && normalized.sprinklerConfigs.length > 0)
+    && !activeTechniqueCatalog.flowOptions.includes(normalized.techniqueConfig.flowRate)
+  ) {
+    errors.push(`Invalid ${activeTechniqueCatalog.key} flow option`);
   }
 
   return errors;

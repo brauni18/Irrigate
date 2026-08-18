@@ -24,6 +24,14 @@ const IrrigationLineSchema = new Schema<IrrigationLine>(
       intervalDays: { type: Number, required: true },
       areaSizeM2: { type: Number, required: true },
       treeCount: { type: Number },
+      sprinklerCount: { type: Number },
+      sprinklerConfigs: [
+        {
+          distance: { type: Number, required: true },
+          flowRate: { type: Number, required: true },
+          sprinklerCount: { type: Number, required: true },
+        },
+      ],
       techniqueKey: { type: String, required: true },
       techniqueConfig: {
         distance: { type: Number, required: true },

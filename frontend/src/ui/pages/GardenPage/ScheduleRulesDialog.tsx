@@ -64,7 +64,7 @@ export function ScheduleRulesDialog({ open, onOpenChange, value, onApply }: Sche
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg rounded-2xl border border-border/80 bg-card p-0 shadow-xl">
-        <div className="border-b border-border/70 bg-gradient-to-r from-primary/6 via-transparent to-accent/10 px-6 py-5">
+        <div className="border-b border-border/70 bg-linear-to-r from-primary/6 via-transparent to-accent/10 px-6 py-5">
           <DialogHeader className="space-y-1.5">
             <DialogTitle className="flex items-center gap-2 text-xl font-semibold tracking-tight">
               <Settings2 className="h-5 w-5" />
