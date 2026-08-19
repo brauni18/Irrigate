@@ -1,5 +1,4 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { VITE_API_URL } from '@/consts/consts';
+import { createApi } from '@reduxjs/toolkit/query/react';
 import type {
   ApiIrrigationLine,
   CalculateIrrigationResponse,
@@ -9,12 +8,13 @@ import type {
   IrrigationLineConfig,
   UpdateLinePayload,
 } from '@/types/irrigationLine.type';
+import { authBaseQuery } from './authBaseQuery';
 
 export type { ApiIrrigationLine, UpdateLinePayload, DeleteLinePayload } from '@/types/irrigationLine.type';
 
 export const irrigationLinesApi = createApi({
   reducerPath: 'irrigationLinesApi',
-  baseQuery: fetchBaseQuery({ baseUrl: VITE_API_URL }),
+  baseQuery: authBaseQuery,
   tagTypes: ['IrrigationLine'],
   endpoints: (builder) => ({
     listLines: builder.query<ApiIrrigationLine[], string>({

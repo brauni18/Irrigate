@@ -1,12 +1,12 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { VITE_API_URL } from '@/consts/consts';
+import { createApi } from '@reduxjs/toolkit/query/react';
 import type { ApiGarden, DeleteGardenResponse, UpdateGardenPayload } from '@/types/garden.type';
+import { authBaseQuery } from './authBaseQuery';
 
 export type { ApiGarden } from '@/types/garden.type';
 
 export const gardensApi = createApi({
   reducerPath: 'gardensApi',
-  baseQuery: fetchBaseQuery({ baseUrl: VITE_API_URL }),
+  baseQuery: authBaseQuery,
   tagTypes: ['Garden'],
   endpoints: (builder) => ({
     listGardens: builder.query<ApiGarden[], void>({

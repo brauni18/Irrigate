@@ -28,6 +28,164 @@ export function animatePageEnter(target: HTMLElement) {
   );
 }
 
+type AuthTransitionDirection = 1 | -1;
+
+function resolveAxisOffset(direction: AuthTransitionDirection, magnitude: number) {
+  return direction === 1 ? magnitude : -magnitude;
+}
+
+export function animateAuthPageEnter(container: HTMLElement, direction: AuthTransitionDirection = 1) {
+  const pageRoot = container.firstElementChild as HTMLElement | null;
+  const main = pageRoot?.querySelector('main') as HTMLElement | null;
+  const sections = main ? Array.from(main.children).filter((child): child is HTMLElement => child instanceof HTMLElement) : [];
+
+  if (prefersReducedMotion()) {
+    gsap.set(container, { clearProps: 'all' });
+    if (pageRoot) {
+      gsap.set(pageRoot, { clearProps: 'all' });
+    }
+    if (main) {
+      gsap.set(main, { clearProps: 'all' });
+    }
+    if (sections.length > 0) {
+      gsap.set(sections, { clearProps: 'all' });
+    }
+    return;
+  }
+
+  gsap.killTweensOf(container);
+  if (pageRoot) {
+    gsap.killTweensOf(pageRoot);
+  }
+  if (main) {
+    gsap.killTweensOf(main);
+  }
+  if (sections.length > 0) {
+    gsap.killTweensOf(sections);
+  }
+
+  const timeline = gsap.timeline({ defaults: { overwrite: 'auto' } });
+
+  timeline.fromTo(
+    container,
+    { autoAlpha: 0 },
+    { autoAlpha: 1, duration: 0.2, ease: 'power1.out' },
+  );
+
+  if (main) {
+    timeline.fromTo(
+      main,
+      { autoAlpha: 0, x: resolveAxisOffset(direction, 44), y: 12 },
+      {
+        autoAlpha: 1,
+        x: 0,
+        y: 0,
+        duration: 0.52,
+        ease: 'power3.out',
+        clearProps: 'transform,opacity,visibility',
+      },
+      0,
+    );
+  }
+
+  if (sections.length > 0) {
+    timeline.fromTo(
+      sections,
+      { autoAlpha: 0, x: resolveAxisOffset(direction, 24), y: 18 },
+      {
+        autoAlpha: 1,
+        x: 0,
+        y: 0,
+        duration: 0.56,
+        ease: 'power3.out',
+        stagger: 0.08,
+        clearProps: 'transform,opacity,visibility',
+      },
+      0.08,
+    );
+  }
+
+  return timeline;
+}
+
+export function animateAuthPageExit(
+  container: HTMLElement,
+  direction: AuthTransitionDirection,
+  onComplete?: () => void,
+) {
+  const pageRoot = container.firstElementChild as HTMLElement | null;
+  const main = pageRoot?.querySelector('main') as HTMLElement | null;
+  const sections = main ? Array.from(main.children).filter((child): child is HTMLElement => child instanceof HTMLElement) : [];
+
+  if (prefersReducedMotion()) {
+    gsap.set(container, { clearProps: 'all' });
+    if (pageRoot) {
+      gsap.set(pageRoot, { clearProps: 'all' });
+    }
+    if (main) {
+      gsap.set(main, { clearProps: 'all' });
+    }
+    if (sections.length > 0) {
+      gsap.set(sections, { clearProps: 'all' });
+    }
+    onComplete?.();
+    return;
+  }
+
+  gsap.killTweensOf(container);
+  if (pageRoot) {
+    gsap.killTweensOf(pageRoot);
+  }
+  if (main) {
+    gsap.killTweensOf(main);
+  }
+  if (sections.length > 0) {
+    gsap.killTweensOf(sections);
+  }
+
+  const timeline = gsap.timeline({ defaults: { overwrite: 'auto' }, onComplete });
+
+  if (sections.length > 0) {
+    timeline.to(
+      sections,
+      {
+        autoAlpha: 0,
+        x: resolveAxisOffset(direction, -18),
+        y: -4,
+        duration: 0.22,
+        ease: 'power2.in',
+        stagger: { each: 0.03, from: 'end' },
+      },
+      0,
+    );
+  }
+
+  if (main) {
+    timeline.to(
+      main,
+      {
+        autoAlpha: 0,
+        x: resolveAxisOffset(direction, -36),
+        y: -8,
+        duration: 0.28,
+        ease: 'power2.inOut',
+      },
+      0,
+    );
+  }
+
+  timeline.to(
+    container,
+    {
+      autoAlpha: 0,
+      duration: 0.18,
+      ease: 'power1.in',
+      clearProps: 'transform,opacity,visibility',
+    },
+    0.08,
+  );
+}
+
 export function animateDialogState(content: HTMLElement, overlay: HTMLElement | null, isOpen: boolean) {
   const revealTargets = Array.from(
     content.querySelectorAll<HTMLElement>('[data-slot="dialog-header"], [data-slot="dialog-footer"], form > *'),

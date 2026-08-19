@@ -1,5 +1,8 @@
 export const ROUTES = {
   home: '/',
+  login: '/login',
+  signup: '/signup',
+  verifyEmail: '/verify-email',
   gardens: '/gardens',
   garden: '/gardens/:id',
   calculator: '/calculator',

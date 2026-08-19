@@ -1,18 +1,44 @@
 import { Home } from '@/ui/pages/Home';
 import { GardenPage } from '@/ui/pages/GardenPage';
+import { LoginPage } from '@/ui/pages/LoginPage';
 import { NotFound } from '@/ui/pages/NotFound';
-import { Root } from '@/ui/Root';
+import { AppLayout } from '@/ui/components/AppLayout';
+import { SignupPage } from '@/ui/pages/SignupPage';
+import { VerifyEmailPage } from '@/ui/pages/VerifyEmailPage';
 import { ROUTES } from '@/router/routes.consts';
+import { PublicOnlyRoute, RequireAuth } from '@/router/RouteGuards';
 import { createBrowserRouter } from 'react-router';
 
 export const router = createBrowserRouter([
   {
-    path: ROUTES.home,
-    Component: Root,
+    Component: RequireAuth,
     children: [
-      { index: true, Component: Home },
-      { path: ROUTES.garden, Component: GardenPage },
-    ]
+      {
+        path: ROUTES.home,
+        Component: AppLayout,
+        children: [
+          { index: true, Component: Home },
+          { path: ROUTES.garden, Component: GardenPage },
+        ]
+      },
+    ],
+  },
+  {
+    Component: PublicOnlyRoute,
+    children: [
+      {
+        path: ROUTES.login,
+        Component: LoginPage,
+      },
+      {
+        path: ROUTES.signup,
+        Component: SignupPage,
+      },
+      {
+        path: ROUTES.verifyEmail,
+        Component: VerifyEmailPage,
+      },
+    ],
   },
   {
     path: ROUTES.fallback,
