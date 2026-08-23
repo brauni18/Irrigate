@@ -2,6 +2,8 @@ import { PLANT_TYPE_OPTIONS } from '@/consts/AddLineDialog.consts';
 import type { IrrigationLineConfig, SprinklerConfig } from '@/types/irrigationLine.type';
 import type { CatalogPlants, PlantLikeOption } from '@/types/AddLineDialog.types';
 
+const SPRINKLER_FLOW_RATE_LPH_PER_LPM = 60;
+
 export function formatDuration(hours: number, minutes: number, seconds: number) {
   const padded = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   const compactParts: string[] = [];
@@ -60,6 +62,28 @@ export function toSprinklerConfigs(config: IrrigationLineConfig, defaultSprinkle
       sprinklerCount: singleConfigCount,
     },
   ];
+}
+
+export function toEditableSprinklerConfig(config: IrrigationLineConfig): IrrigationLineConfig {
+  if (config.techniqueKey !== 'sprinkler') {
+    return config;
+  }
+
+  return {
+    ...config,
+    techniqueConfig: {
+      ...config.techniqueConfig,
+      flowRate: Number.isFinite(config.techniqueConfig.flowRate)
+        ? config.techniqueConfig.flowRate / SPRINKLER_FLOW_RATE_LPH_PER_LPM
+        : config.techniqueConfig.flowRate,
+    },
+    sprinklerConfigs: config.sprinklerConfigs?.map((sprinkler) => ({
+      ...sprinkler,
+      flowRate: Number.isFinite(sprinkler.flowRate)
+        ? sprinkler.flowRate / SPRINKLER_FLOW_RATE_LPH_PER_LPM
+        : sprinkler.flowRate,
+    })),
+  };
 }
 
 export function aggregateSprinklerConfigs(

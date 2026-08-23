@@ -5,6 +5,8 @@ import {
   DEFAULT_IRRIGATION_LINE_CONFIG,
   mergeIrrigationConfig,
   normalizeIrrigationConfig,
+  translateIncomingSprinklerFlowUnits,
+  translateIncomingSprinklerFlowUnitsPatch,
   validateIrrigationConfig,
 } from '../domain/irrigation/config.js';
 import { IrrigationLineModel } from '../models/IrrigationLine.model.js';
@@ -50,7 +52,9 @@ export async function createLine(req: Request<{ gardenId: string }>, res: Respon
       return res.status(400).json({ message: 'name is required' });
     }
 
-    const lineConfig = normalizeIrrigationConfig(config ?? DEFAULT_IRRIGATION_LINE_CONFIG);
+    const lineConfig = normalizeIrrigationConfig(
+      translateIncomingSprinklerFlowUnits(config ?? DEFAULT_IRRIGATION_LINE_CONFIG),
+    );
     const configErrors = validateIrrigationConfig(lineConfig);
 
     if (configErrors.length > 0) {
@@ -105,7 +109,12 @@ export async function updateLine(req: Request<{ lineId: string }>, res: Response
     }
 
     const mergedConfig = normalizeIrrigationConfig(
-      mergeIrrigationConfig(current.config ?? DEFAULT_IRRIGATION_LINE_CONFIG, config),
+      mergeIrrigationConfig(
+        current.config ?? DEFAULT_IRRIGATION_LINE_CONFIG,
+        config
+          ? translateIncomingSprinklerFlowUnitsPatch(config, current.config?.techniqueKey)
+          : config,
+      ),
     );
     const configErrors = validateIrrigationConfig(mergedConfig);
 

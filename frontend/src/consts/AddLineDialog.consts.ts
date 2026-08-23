@@ -20,7 +20,7 @@ export const DEFAULT_ADD_LINE_CONFIG: IrrigationLineConfig = {
 
 export const DEFAULT_SPRINKLER_CONFIG: SprinklerConfig = {
   distance: 6,
-  flowRate: 30,
+  flowRate: 0.5,
   sprinklerCount: 1,
 };
 
