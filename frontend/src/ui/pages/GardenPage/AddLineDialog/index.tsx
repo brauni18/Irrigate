@@ -25,7 +25,7 @@ import {
 import type { AddLineDialogProps } from '@/types/GardenPage.types';
 import type { IrrigationCalculation, IrrigationLineConfig } from '@/types/irrigationLine.type';
 import { AddLineDialogProvider } from './context';
-import { aggregateSprinklerConfigs, findPlantOption, formatDuration, getResolvedTreeCount, toSprinklerConfigs } from './utils';
+import { aggregateSprinklerConfigs, findPlantOption, formatDuration, getResolvedTreeCount, toEditableSprinklerConfig, toSprinklerConfigs } from './utils';
 import { CalculationPreviewSection } from './sections/CalculationPreviewSection';
 import { ConfigurationSection } from './sections/ConfigurationSection';
 import { DialogActionsSection } from './sections/DialogActionsSection';
@@ -194,7 +194,7 @@ export function AddLineDialog({ open, onOpenChange, onConfirm, isLoading, initia
     setConfig((prev) => {
       const nextTechniqueKey = prev.plantKey === 'grass' ? 'sprinkler' : 'drip';
       const fallbackDistance = nextTechniqueKey === 'sprinkler' ? 6 : 0.5;
-      const fallbackFlowRate = nextTechniqueKey === 'sprinkler' ? 30 : 2.3;
+      const fallbackFlowRate = nextTechniqueKey === 'sprinkler' ? 0.5 : 2.3;
 
       return {
         ...prev,
@@ -216,7 +216,7 @@ export function AddLineDialog({ open, onOpenChange, onConfirm, isLoading, initia
   useEffect(() => {
     if (open) {
       setName(initialName ?? '');
-      setConfig({ ...DEFAULT_ADD_LINE_CONFIG, ...initialConfig });
+      setConfig(toEditableSprinklerConfig({ ...DEFAULT_ADD_LINE_CONFIG, ...initialConfig }));
       setNameError('');
       setTechniqueMenuOpen(false);
     }

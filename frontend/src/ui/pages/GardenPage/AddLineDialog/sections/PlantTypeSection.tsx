@@ -24,7 +24,7 @@ export function PlantTypeSection() {
             const nextTechniqueKey = nextPlantKey === 'grass' ? 'sprinkler' : 'drip';
             const nextTechniqueConfig = {
               distance: nextTechniqueKey === 'sprinkler' ? 6 : 0.5,
-              flowRate: nextTechniqueKey === 'sprinkler' ? 30 : 2.3,
+              flowRate: nextTechniqueKey === 'sprinkler' ? 0.5 : 2.3,
             };
             const nextSprinklerConfigs = nextTechniqueKey === 'sprinkler'
               ? toSprinklerConfigs(
