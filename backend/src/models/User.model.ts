@@ -1,20 +1,28 @@
-import { Schema, model, Types, type HydratedDocument } from 'mongoose';
+import { Schema, model, type HydratedDocument } from 'mongoose';
 
-type UserProps = {
-  email: string;
+type User = {
   name: string;
-  posts: Types.ObjectId[];
+  email: string;
+  passwordHash: string;
+  emailVerified: boolean;
+  emailVerificationTokenHash?: string;
+  emailVerificationTokenExpiresAt?: Date;
 };
 
-export type UserDocument = HydratedDocument<UserProps>;
+export type UserType = HydratedDocument<User>;
 
-const UserSchema = new Schema<UserProps>(
+const UserSchema = new Schema<User>(
   {
-    email: { type: String, required: true, unique: true, trim: true },
     name: { type: String, required: true, trim: true },
-    posts: [{ type: Schema.Types.ObjectId, ref: 'Post' }],
+    email: { type: String, required: true, trim: true, lowercase: true, unique: true },
+    passwordHash: { type: String, required: true },
+    emailVerified: { type: Boolean, required: true, default: false },
+    emailVerificationTokenHash: { type: String },
+    emailVerificationTokenExpiresAt: { type: Date },
   },
   { timestamps: true },
 );
 
-export const UserModel = model<UserProps>('User', UserSchema);
+UserSchema.index({ email: 1 }, { unique: true });
+
+export const UserModel = model<User>('User', UserSchema);

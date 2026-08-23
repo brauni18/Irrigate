@@ -1,23 +1,56 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { VITE_API_URL } from '@/consts/consts';
-
-type ApiUser = {
-  _id: string;
-  email: string;
-  name: string;
-  posts: string[];
-  createdAt: string;
-  updatedAt: string;
-};
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { authBaseQuery } from './authBaseQuery';
+import type { AuthResponse, AuthUser, SignupResponse } from '@/types/user.type';
 
 export const usersApi = createApi({
   reducerPath: 'usersApi',
-  baseQuery: fetchBaseQuery({ baseUrl: VITE_API_URL }),
+  baseQuery: authBaseQuery,
   endpoints: (builder) => ({
-    listUsers: builder.query<ApiUser[], void>({
-      query: () => '/users',
+    signup: builder.mutation<SignupResponse, { name: string; email: string; password: string }>({
+      query: (body) => ({
+        url: '/auth/signup',
+        method: 'POST',
+        body,
+      }),
+    }),
+    login: builder.mutation<AuthResponse, { email: string; password: string }>({
+      query: (body) => ({
+        url: '/auth/login',
+        method: 'POST',
+        body,
+      }),
+    }),
+    getMe: builder.query<AuthUser, void>({
+      query: () => '/auth/me',
+    }),
+    verifyEmail: builder.mutation<{ message: string }, { email: string; token: string }>({
+      query: (body) => ({
+        url: '/auth/verify-email',
+        method: 'POST',
+        body,
+      }),
+    }),
+    resendVerification: builder.mutation<{ message: string }, { email: string }>({
+      query: (body) => ({
+        url: '/auth/resend-verification',
+        method: 'POST',
+        body,
+      }),
+    }),
+    logout: builder.mutation<{ message: string }, void>({
+      query: () => ({
+        url: '/auth/logout',
+        method: 'POST',
+      }),
     }),
   }),
 });
 
-export const { useListUsersQuery, useLazyListUsersQuery } = usersApi;
+export const {
+  useSignupMutation,
+  useLoginMutation,
+  useGetMeQuery,
+  useVerifyEmailMutation,
+  useResendVerificationMutation,
+  useLogoutMutation,
+} = usersApi;
