@@ -4,4 +4,5 @@ export type CreateGardenBody = {
   addressNumber?: string;
   latitude?: number;
   longitude?: number;
+  photoKey?: string;
 };

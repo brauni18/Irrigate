@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { GardenModel } from '../models/Garden.model.js';
 import type { CreateGardenBody } from '../types/gardens.types.js';
+import { deleteStoredObject, resolveStoredPhotoUrl, StorageConfigurationError } from '../utils/r2.js';
 
 function authUserId(req: Request, res: Response): string | null {
   if (!req.authUser?.id) {
@@ -12,14 +13,21 @@ function authUserId(req: Request, res: Response): string | null {
   return req.authUser.id;
 }
 
+async function serializeGarden(garden: { toObject: () => Record<string, unknown> }) {
+  const serialized = garden.toObject() as Record<string, unknown> & { photo?: string };
+  return {
+    ...serialized,
+    photo: await resolveStoredPhotoUrl(serialized.photo),
+  };
+}
+
 // CREATE garden
 export async function createGarden(req: Request, res: Response) {
   try {
     const userId = authUserId(req, res);
     if (!userId) return;
 
-    const { name, address, addressNumber, latitude, longitude } = req.body as Partial<CreateGardenBody>;
-    const photo = req.file ? `/uploads/${req.file.filename}` : undefined;
+    const { name, address, addressNumber, latitude, longitude, photoKey } = req.body as Partial<CreateGardenBody>;
     const parsedLatitude = latitude == null ? undefined : Number(latitude);
     const parsedLongitude = longitude == null ? undefined : Number(longitude);
 
@@ -30,10 +38,15 @@ export async function createGarden(req: Request, res: Response) {
       addressNumber,
       latitude: Number.isFinite(parsedLatitude) ? parsedLatitude : undefined,
       longitude: Number.isFinite(parsedLongitude) ? parsedLongitude : undefined,
-      photo,
+      photo: photoKey?.trim() || undefined,
     });
-    return res.status(201).json(garden);
-  } catch {
+
+    return res.status(201).json(await serializeGarden(garden));
+  } catch (error) {
+    if (error instanceof StorageConfigurationError) {
+      return res.status(500).json({ message: 'upload storage is not configured' });
+    }
+
     return res.status(500).json({ message: 'server error' });
   }
 }
@@ -45,8 +58,12 @@ export async function listGardens(req: Request, res: Response) {
     if (!userId) return;
 
     const gardens = await GardenModel.find({ ownerId: new Types.ObjectId(userId) }).sort({ createdAt: -1 });
-    return res.json(gardens);
-  } catch {
+    return res.json(await Promise.all(gardens.map((garden) => serializeGarden(garden))));
+  } catch (error) {
+    if (error instanceof StorageConfigurationError) {
+      return res.status(500).json({ message: 'upload storage is not configured' });
+    }
+
     return res.status(500).json({ message: 'server error' });
   }
 }
@@ -60,8 +77,12 @@ export async function getGardenById(req: Request, res: Response) {
     const { id } = req.params;
     const garden = await GardenModel.findOne({ _id: id, ownerId: new Types.ObjectId(userId) });
     if (!garden) return res.status(404).json({ message: 'garden not found' });
-    return res.json(garden);
-  } catch {
+    return res.json(await serializeGarden(garden));
+  } catch (error) {
+    if (error instanceof StorageConfigurationError) {
+      return res.status(500).json({ message: 'upload storage is not configured' });
+    }
+
     return res.status(500).json({ message: 'server error' });
   }
 }
@@ -73,13 +94,19 @@ export async function updateGarden(req: Request, res: Response) {
     if (!userId) return;
 
     const { id } = req.params;
-    const { name, address, addressNumber, latitude, longitude } = req.body as Partial<CreateGardenBody>;
-    const photo = req.file ? `/uploads/${req.file.filename}` : undefined;
+    const { name, address, addressNumber, latitude, longitude, photoKey } = req.body as Partial<CreateGardenBody>;
     const parsedLatitude = latitude == null ? undefined : Number(latitude);
     const parsedLongitude = longitude == null ? undefined : Number(longitude);
+    const existing = await GardenModel.findOne({ _id: id, ownerId: new Types.ObjectId(userId) });
 
-    const updated = await GardenModel.findOneAndUpdate(
-      { _id: id, ownerId: new Types.ObjectId(userId) },
+    if (!existing) {
+      return res.status(404).json({ message: 'garden not found' });
+    }
+
+    const nextPhotoKey = photoKey?.trim() || undefined;
+
+    const updated = await GardenModel.findByIdAndUpdate(
+      existing._id,
       {
         $set: {
           ...(name && { name }),
@@ -87,15 +114,26 @@ export async function updateGarden(req: Request, res: Response) {
           ...(addressNumber !== undefined && { addressNumber }),
           ...(Number.isFinite(parsedLatitude) && { latitude: parsedLatitude }),
           ...(Number.isFinite(parsedLongitude) && { longitude: parsedLongitude }),
-          ...(photo && { photo }),
+          ...(nextPhotoKey && { photo: nextPhotoKey }),
         },
       },
       { new: true },
     );
 
     if (!updated) return res.status(404).json({ message: 'garden not found' });
-    return res.json(updated);
-  } catch {
+
+    if (nextPhotoKey && existing.photo && existing.photo !== nextPhotoKey) {
+      await deleteStoredObject(existing.photo).catch((storageError: unknown) => {
+        console.error('Failed to delete replaced garden photo', storageError);
+      });
+    }
+
+    return res.json(await serializeGarden(updated));
+  } catch (error) {
+    if (error instanceof StorageConfigurationError) {
+      return res.status(500).json({ message: 'upload storage is not configured' });
+    }
+
     return res.status(500).json({ message: 'server error' });
   }
 }
@@ -109,6 +147,11 @@ export async function deleteGarden(req: Request, res: Response) {
     const { id } = req.params;
     const garden = await GardenModel.findOneAndDelete({ _id: id, ownerId: new Types.ObjectId(userId) });
     if (!garden) return res.status(404).json({ message: 'garden not found' });
+
+    await deleteStoredObject(garden.photo).catch((storageError: unknown) => {
+      console.error('Failed to delete garden photo', storageError);
+    });
+
     return res.json({ message: 'garden deleted' });
   } catch {
     return res.status(500).json({ message: 'server error' });

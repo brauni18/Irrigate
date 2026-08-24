@@ -1,5 +1,12 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import type { ApiGarden, DeleteGardenResponse, UpdateGardenPayload } from '@/types/garden.type';
+import type {
+  ApiGarden,
+  DeleteGardenResponse,
+  GardenMutationBody,
+  GardenPhotoUploadUrlResponse,
+  RequestGardenPhotoUploadUrlPayload,
+  UpdateGardenPayload,
+} from '@/types/garden.type';
 import { authBaseQuery } from './authBaseQuery';
 
 export type { ApiGarden } from '@/types/garden.type';
@@ -17,19 +24,29 @@ export const gardensApi = createApi({
       query: (id) => `/gardens/${id}`,
       providesTags: (_result, _error, id) => [{ type: 'Garden', id }],
     }),
-    createGarden: builder.mutation<ApiGarden, FormData>({
-      query: (formData) => ({
+    requestGardenPhotoUploadUrl: builder.mutation<
+      GardenPhotoUploadUrlResponse,
+      RequestGardenPhotoUploadUrlPayload
+    >({
+      query: (body) => ({
+        url: '/uploads/gardens/photo-url',
+        method: 'POST',
+        body,
+      }),
+    }),
+    createGarden: builder.mutation<ApiGarden, GardenMutationBody>({
+      query: (body) => ({
         url: '/gardens',
         method: 'POST',
-        body: formData,
+        body,
       }),
       invalidatesTags: ['Garden'],
     }),
     updateGarden: builder.mutation<ApiGarden, UpdateGardenPayload>({
-      query: ({ id, formData }) => ({
+      query: ({ id, body }) => ({
         url: `/gardens/${id}`,
         method: 'PATCH',
-        body: formData,
+        body,
       }),
       invalidatesTags: ['Garden'],
     }),
@@ -46,6 +63,7 @@ export const gardensApi = createApi({
 export const {
   useListGardensQuery,
   useGetGardenQuery,
+  useRequestGardenPhotoUploadUrlMutation,
   useCreateGardenMutation,
   useUpdateGardenMutation,
   useDeleteGardenMutation,

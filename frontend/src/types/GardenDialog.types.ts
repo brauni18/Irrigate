@@ -14,6 +14,7 @@ export type GardenDialogProps = {
 export type GardenDialogErrors = {
   name?: string;
   address?: string;
+  submit?: string;
 };
 
 export type GardenLocationMatch = {

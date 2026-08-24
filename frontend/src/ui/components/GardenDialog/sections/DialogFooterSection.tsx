@@ -4,10 +4,11 @@ import { Button } from '@/shadcn/components/ui/button';
 import { useGardenDialogContext } from '../context';
 
 export function DialogFooterSection() {
-  const { mode, isLoading, disableSubmit, onCancel } = useGardenDialogContext();
+  const { mode, isLoading, disableSubmit, errors, onCancel } = useGardenDialogContext();
 
   return (
     <div className="flex items-center justify-end gap-2 border-t border-border/60 bg-muted/20 px-6 py-4">
+      {errors.submit ? <p className="mr-auto text-sm text-destructive">{errors.submit}</p> : null}
       <Button
         type="button"
         variant="ghost"
