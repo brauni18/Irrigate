@@ -13,18 +13,28 @@ import { requireAuth } from './middleware/requireAuth.js';
 import { assertR2Configuration } from './utils/r2.js';
 
 const configuredOrigins =
-  process.env.FRONTEND_URL ?? process.env.frontendUrl ?? 'http://localhost:5173,http://127.0.0.1:5173';
+  process.env.FRONTEND_URL || process.env.frontendUrl || 'http://localhost:5173,http://127.0.0.1:5173';
+
+function normalizeOrigin(origin: string) {
+  const trimmed = origin.trim().replace(/^['\"]|['\"]$/g, '');
+
+  try {
+    return new URL(trimmed).origin;
+  } catch {
+    return trimmed.replace(/\/$/, '');
+  }
+}
 
 const allowedOrigins = configuredOrigins
   .split(',')
-  .map((origin) => origin.trim())
+  .map((origin) => normalizeOrigin(origin))
   .filter(Boolean);
 
 const uploadsDirectory = path.resolve(import.meta.dirname, '../uploads');
 
 function isLocalDevOrigin(origin: string) {
   try {
-    const url = new URL(origin);
+    const url = new URL(normalizeOrigin(origin));
     return url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname);
   } catch {
     return false;
@@ -45,7 +55,8 @@ app.use(
     origin: (origin, callback) => {
       // Allow tools/requests without browser origin (e.g., curl, Postman).
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
+      const normalizedOrigin = normalizeOrigin(origin);
+      if (allowedOrigins.includes(normalizedOrigin)) return callback(null, true);
       if (isLocalDevOrigin(origin)) return callback(null, true);
       return callback(new Error('Not allowed by CORS'));
     },
