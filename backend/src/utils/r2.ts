@@ -51,7 +51,7 @@ function getR2Config(): R2Config {
     accountId: readRequiredEnv('R2_ACCOUNT_ID'),
     accessKeyId: readRequiredEnv('R2_ACCESS_KEY_ID'),
     secretAccessKey: readRequiredEnv('R2_SECRET_ACCESS_KEY'),
-    bucket: readRequiredEnv('R2_BUCKET'),
+    bucket: readRequiredEnv('R2_BUCKET_NAME'),
   };
 }
 
