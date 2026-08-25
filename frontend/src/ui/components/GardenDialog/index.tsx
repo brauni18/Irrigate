@@ -10,7 +10,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shadcn/components/ui/dialog';
-import { useCreateGardenMutation, useUpdateGardenMutation } from '@/store/apis/gardens.api';
+import {
+  useCreateGardenMutation,
+  useRequestGardenPhotoUploadUrlMutation,
+  useUpdateGardenMutation,
+} from '@/store/apis/gardens.api';
+import type { GardenMutationBody } from '@/types/garden.type';
 import type {
   GardenDialogErrors,
   GardenDialogProps,
@@ -32,10 +37,11 @@ export function GardenDialog({
   onCreated,
   onSaved,
 }: GardenDialogProps) {
+  const [requestGardenPhotoUploadUrl, uploadUrlState] = useRequestGardenPhotoUploadUrlMutation();
   const [createGarden, createState] = useCreateGardenMutation();
   const [updateGarden, updateState] = useUpdateGardenMutation();
   const isEditMode = mode === 'edit';
-  const isLoading = isEditMode ? updateState.isLoading : createState.isLoading;
+  const isLoading = uploadUrlState.isLoading || (isEditMode ? updateState.isLoading : createState.isLoading);
 
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
@@ -91,12 +97,57 @@ export function GardenDialog({
     if (!file) return;
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
+    if (errors.submit) {
+      setErrors((prev) => ({ ...prev, submit: undefined }));
+    }
   }
 
   function clearPhotoSelection() {
     setPhotoFile(null);
     setPhotoPreview(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  async function uploadPhoto(file: File) {
+    if (!file.type.startsWith('image/')) {
+      throw new Error('Only image files are allowed');
+    }
+
+    const signedUpload = await requestGardenPhotoUploadUrl({
+      fileName: file.name,
+      contentType: file.type,
+      fileSize: file.size,
+    }).unwrap();
+
+    const uploadResponse = await fetch(signedUpload.uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type,
+      },
+      body: file,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error('Failed to upload photo to storage');
+    }
+
+    return signedUpload.photoKey;
+  }
+
+  function getErrorMessage(error: unknown) {
+    if (typeof error === 'object' && error !== null) {
+      const typedError = error as { data?: { message?: unknown }; message?: unknown };
+
+      if (typeof typedError.data?.message === 'string' && typedError.data.message.trim()) {
+        return typedError.data.message;
+      }
+
+      if (typeof typedError.message === 'string' && typedError.message.trim()) {
+        return typedError.message;
+      }
+    }
+
+    return 'Failed to save garden. Please try again.';
   }
 
   function handleClose(nextOpen: boolean) {
@@ -137,37 +188,41 @@ export function GardenDialog({
       return;
     }
 
-    const formData = new FormData();
     const selectedMatch = selectedLocation ?? null;
+    const body: GardenMutationBody = {
+      name: name.trim(),
+      address: address.trim(),
+    };
 
-    formData.append('name', name.trim());
-    formData.append('address', address.trim());
+    setErrors({});
 
     if (selectedMatch) {
-      formData.append('latitude', String(selectedMatch.latitude));
-      formData.append('longitude', String(selectedMatch.longitude));
+      body.latitude = selectedMatch.latitude;
+      body.longitude = selectedMatch.longitude;
     }
 
     if (isEditMode) {
-      formData.append('addressNumber', addressNumber.trim());
+      body.addressNumber = addressNumber.trim();
     } else if (addressNumber.trim()) {
-      formData.append('addressNumber', addressNumber.trim());
+      body.addressNumber = addressNumber.trim();
     }
 
-    if (photoFile) formData.append('photo', photoFile);
-
     try {
+      if (photoFile) {
+        body.photoKey = await uploadPhoto(photoFile);
+      }
+
       if (isEditMode) {
-        await updateGarden({ id: garden!._id, formData }).unwrap();
+        await updateGarden({ id: garden!._id, body }).unwrap();
       } else {
-        await createGarden(formData).unwrap();
+        await createGarden(body).unwrap();
       }
 
       handleClose(false);
       onCreated?.();
       onSaved?.();
-    } catch {
-      // error handled by RTK Query
+    } catch (error) {
+      setErrors((prev) => ({ ...prev, submit: getErrorMessage(error) }));
     }
   }
 
@@ -191,13 +246,17 @@ export function GardenDialog({
       fileInputRef,
       onNameChange: (value: string) => {
         setName(value);
-        if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
+        if (errors.name || errors.submit) {
+          setErrors((prev) => ({ ...prev, name: undefined, submit: undefined }));
+        }
       },
       onAddressChange: (value: string) => {
         setAddress(value);
         setSelectedLocation(null);
         setLocationLookupError('');
-        if (errors.address) setErrors((prev) => ({ ...prev, address: undefined }));
+        if (errors.address || errors.submit) {
+          setErrors((prev) => ({ ...prev, address: undefined, submit: undefined }));
+        }
       },
       onAddressNumberChange: setAddressNumber,
       onToggleMapPicker: () => setShowMapPicker((prev) => !prev),

@@ -4,17 +4,9 @@ export type ScheduleEntry = {
   id: string;
   time: string;
   day: string;
-  dateKey: string;
   lineName: string;
   duration: number;
   liters: number;
-};
-
-export type ScheduleRules = {
-  blockedWeekdays: number[];
-  preferredStartHour: number;
-  preferredEndHour: number;
-  lineSpacingMinutes: number;
 };
 
 export type WaterUsageEntry = {
@@ -28,7 +20,17 @@ export type WeatherIrrigationEntry = {
   temperature: number;
 };
 
-export const LINE_PERFORMANCE_COLORS = ['#60a5fa', '#34d399', '#fbbf24', '#f87171'] as const;
+export type ScheduleRules = {
+  blockedWeekdays: number[];
+  preferredStartHour: number;
+  preferredEndHour: number;
+  lineSpacingMinutes: number;
+};
+
+export type ScheduleWindowEntry = ScheduleEntry & {
+  dateKey: string;
+};
+
 export const WEEKDAY_OPTIONS = [
   { value: 0, label: 'Sun' },
   { value: 1, label: 'Mon' },
@@ -38,17 +40,22 @@ export const WEEKDAY_OPTIONS = [
   { value: 5, label: 'Fri' },
   { value: 6, label: 'Sat' },
 ] as const;
-export const DEFAULT_SCHEDULE_RULES: ScheduleRules = {
-  blockedWeekdays: [],
-  preferredStartHour: 6,
-  preferredEndHour: 9,
-  lineSpacingMinutes: 0,
-};
+
+export const LINE_PERFORMANCE_COLORS = ['#60a5fa', '#34d399', '#fbbf24', '#f87171'] as const;
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
+const DEFAULT_SCHEDULE_START_HOUR = 6;
+const SCHEDULE_SLOT_MINUTES = 30;
 
-export const SCHEDULE_HISTORY_DAYS = 30;
-export const SCHEDULE_FUTURE_DAYS = 30;
+export const DEFAULT_SCHEDULE_RULES: ScheduleRules = {
+  blockedWeekdays: [],
+  preferredStartHour: DEFAULT_SCHEDULE_START_HOUR,
+  preferredEndHour: DEFAULT_SCHEDULE_START_HOUR + 3,
+  lineSpacingMinutes: 10,
+};
+
+export const SCHEDULE_HISTORY_DAYS = 1;
+export const SCHEDULE_FUTURE_DAYS = 7;
 
 function startOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -77,11 +84,32 @@ function formatTime(date: Date) {
   });
 }
 
-function formatDateKey(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+function toDateKey(date: Date) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+function formatMinuteOfDay(totalMinutes: number) {
+  const normalized = ((totalMinutes % (24 * 60)) + 24 * 60) % (24 * 60);
+  const hours = Math.floor(normalized / 60);
+  const minutes = normalized % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
+function clampScheduleRules(rules: ScheduleRules): ScheduleRules {
+  const preferredStartHour = Math.min(23, Math.max(0, Math.floor(rules.preferredStartHour)));
+  const preferredEndHour = Math.min(24, Math.max(preferredStartHour + 1, Math.floor(rules.preferredEndHour)));
+  const lineSpacingMinutes = Math.min(180, Math.max(-120, Math.floor(rules.lineSpacingMinutes)));
+
+  return {
+    blockedWeekdays: Array.from(new Set(rules.blockedWeekdays)).filter((day) => day >= 0 && day <= 6),
+    preferredStartHour,
+    preferredEndHour,
+    lineSpacingMinutes,
+  };
 }
 
 function clampIntervalDays(value?: number) {
@@ -89,116 +117,107 @@ function clampIntervalDays(value?: number) {
   return Math.max(1, Math.floor(value));
 }
 
-function buildBaseTime(now: Date, rules: ScheduleRules) {
+function buildBaseTime(now: Date, slotIndex: number) {
   const base = startOfDay(now);
-  base.setHours(rules.preferredStartHour, 0, 0, 0);
+  base.setHours(DEFAULT_SCHEDULE_START_HOUR, 0, 0, 0);
+  base.setMinutes(base.getMinutes() + slotIndex * SCHEDULE_SLOT_MINUTES);
   return base;
 }
 
-function getFirstRunInRange(anchorDate: Date, rangeStart: Date, intervalDays: number, rules: ScheduleRules) {
-  const anchorRun = buildBaseTime(anchorDate, rules);
-  const candidate = buildBaseTime(rangeStart, rules);
+function getNextRunDate(anchorDate: Date, now: Date, intervalDays: number, slotIndex: number) {
+  const nextRun = buildBaseTime(now, slotIndex);
 
-  if (candidate < anchorRun) {
-    return anchorRun;
+  while (nextRun < now || dateDiffInDays(anchorDate, nextRun) % intervalDays !== 0) {
+    nextRun.setDate(nextRun.getDate() + 1);
   }
 
-  const daysSinceAnchor = dateDiffInDays(anchorRun, candidate);
-  const remainder = ((daysSinceAnchor % intervalDays) + intervalDays) % intervalDays;
-
-  if (remainder === 0) {
-    return candidate;
-  }
-
-  candidate.setDate(candidate.getDate() + (intervalDays - remainder));
-  return candidate;
+  return nextRun;
 }
 
-export function buildScheduleWindow(
-  lines: ApiIrrigationLine[],
-  now = new Date(),
-  historyDays = SCHEDULE_HISTORY_DAYS,
-  futureDays = SCHEDULE_FUTURE_DAYS,
-  rules: ScheduleRules = DEFAULT_SCHEDULE_RULES,
-): ScheduleEntry[] {
-  const scheduleCandidates: Array<{
-    date: Date;
-    dateKey: string;
-    day: string;
-    duration: number;
-    liters: number;
-    lineName: string;
-    lineId: string;
-    lineIndex: number;
-  }> = [];
+export function buildUpcomingSchedule(lines: ApiIrrigationLine[], now = new Date(), maxEntries = 8): ScheduleEntry[] {
+  const scheduleCandidates: Array<ScheduleEntry & { timestamp: number }> = [];
   const scheduleEligibleLines = lines.filter((line) => line.isActive && line.config && line.calculation);
-  const blockedWeekdays = new Set(rules.blockedWeekdays);
-
-  if (blockedWeekdays.size >= WEEKDAY_OPTIONS.length) {
-    return [];
-  }
-
-  const rangeStart = startOfDay(new Date(now.getTime() - historyDays * DAY_IN_MS));
-  const rangeEndExclusive = startOfDay(new Date(now.getTime() + (futureDays + 1) * DAY_IN_MS));
 
   scheduleEligibleLines.forEach((line, lineIndex) => {
     const intervalDays = clampIntervalDays(line.config?.intervalDays);
     const anchorDate = new Date(line.createdAt);
-    let runDate = getFirstRunInRange(anchorDate, rangeStart, intervalDays, rules);
+    let runDate = getNextRunDate(anchorDate, now, intervalDays, lineIndex);
+    const runCount = Math.max(1, Math.ceil(maxEntries / Math.max(scheduleEligibleLines.length, 1)));
 
-    while (runDate < rangeEndExclusive) {
-      if (!blockedWeekdays.has(runDate.getDay())) {
-        scheduleCandidates.push({
-          date: new Date(runDate),
-          day: formatDay(runDate, now),
-          dateKey: formatDateKey(runDate),
-          lineName: line.name,
-          duration: Math.max(1, Math.round(line.calculation!.timeInHours * 60)),
-          liters: Number((line.calculation!.waterPortion * 1000).toFixed(1)),
-          lineId: line._id,
-          lineIndex,
-        });
-      }
+    for (let i = 0; i < runCount; i += 1) {
+      scheduleCandidates.push({
+        id: `${line._id}-${runDate.toISOString()}`,
+        time: formatTime(runDate),
+        day: formatDay(runDate, now),
+        lineName: line.name,
+        duration: Math.max(1, Math.round(line.calculation!.timeInHours * 60)),
+        liters: Number((line.calculation!.waterPortion * 1000).toFixed(1)),
+        timestamp: runDate.getTime(),
+      });
 
       runDate = new Date(runDate.getTime() + intervalDays * DAY_IN_MS);
     }
   });
 
   return scheduleCandidates
-    .sort((a, b) => {
-      const dateDifference = a.date.getTime() - b.date.getTime();
+    .sort((a, b) => a.timestamp - b.timestamp)
+    .slice(0, maxEntries)
+    .map(({ timestamp: _timestamp, ...entry }) => entry);
+}
 
-      if (dateDifference !== 0) return dateDifference;
-      return a.lineIndex - b.lineIndex;
-    })
-    .map((entry, index, allEntries) => {
-      const previousEntry = allEntries[index - 1];
-      const dayStart = buildBaseTime(entry.date, rules);
-      let scheduledDate = new Date(dayStart);
+export function buildScheduleWindow(
+  lines: ApiIrrigationLine[],
+  referenceDate = new Date(),
+  historyDays = SCHEDULE_HISTORY_DAYS,
+  futureDays = SCHEDULE_FUTURE_DAYS,
+  rules: ScheduleRules = DEFAULT_SCHEDULE_RULES,
+): ScheduleWindowEntry[] {
+  const normalizedRules = clampScheduleRules(rules);
+  const windowStart = startOfDay(referenceDate);
+  windowStart.setDate(windowStart.getDate() - Math.max(0, historyDays));
+  const totalDays = Math.max(0, historyDays) + Math.max(0, futureDays) + 1;
 
-      if (previousEntry && previousEntry.dateKey === entry.dateKey) {
-        const previousScheduledStart = new Date(previousEntry.date);
-        const previousScheduledEnd = new Date(previousScheduledStart.getTime() + previousEntry.duration * 60 * 1000);
+  const activeLines = lines.filter((line) => line.isActive && line.config && line.calculation);
+  const entries: ScheduleWindowEntry[] = [];
 
-        scheduledDate = new Date(previousScheduledEnd.getTime() + rules.lineSpacingMinutes * 60 * 1000);
+  for (let dayOffset = 0; dayOffset < totalDays; dayOffset += 1) {
+    const currentDate = new Date(windowStart.getTime() + dayOffset * DAY_IN_MS);
 
-        if (scheduledDate < dayStart) {
-          scheduledDate = new Date(dayStart);
-        }
-      }
+    if (normalizedRules.blockedWeekdays.includes(currentDate.getDay())) continue;
 
-      entry.date = scheduledDate;
-
-      return {
-        id: `${entry.lineId}-${scheduledDate.toISOString()}`,
-        time: formatTime(scheduledDate),
-        day: entry.day,
-        dateKey: entry.dateKey,
-        lineName: entry.lineName,
-        duration: entry.duration,
-        liters: entry.liters,
-      };
+    const runnableLines = activeLines.filter((line) => {
+      const intervalDays = clampIntervalDays(line.config?.intervalDays);
+      const anchorDate = new Date(line.createdAt);
+      return dateDiffInDays(anchorDate, currentDate) % intervalDays === 0;
     });
+
+    if (runnableLines.length === 0) continue;
+
+    let minuteCursor = normalizedRules.preferredStartHour * 60;
+    const latestStartMinute = normalizedRules.preferredEndHour * 60;
+    const dateKey = toDateKey(currentDate);
+
+    runnableLines.forEach((line) => {
+      const duration = Math.max(1, Math.round((line.calculation?.timeInHours ?? 0) * 60));
+      const startMinute = Math.min(minuteCursor, latestStartMinute);
+
+      entries.push({
+        id: `${line._id}-${dateKey}-${startMinute}`,
+        dateKey,
+        time: formatMinuteOfDay(startMinute),
+        day: formatDay(currentDate, referenceDate),
+        lineName: line.name,
+        duration,
+        liters: Number(((line.calculation?.waterPortion ?? 0) * 1000).toFixed(1)),
+      });
+
+      minuteCursor = startMinute + duration + normalizedRules.lineSpacingMinutes;
+    });
+  }
+
+  return entries.sort((a, b) =>
+    a.dateKey === b.dateKey ? a.time.localeCompare(b.time) : a.dateKey.localeCompare(b.dateKey),
+  );
 }
 
 export const WATER_USAGE_7D: WaterUsageEntry[] = [
