@@ -4,6 +4,7 @@ import 'dotenv/config';
 import { connectToMongoDB, startServer } from './utils.js';
 import { authRouter } from './routes/auth.routes.js';
 import { gardensRouter } from './routes/gardens.routes.js';
+import { feedbackRouter } from './routes/feedback.routes.js';
 import { irrigationLinesRouter } from './routes/irrigationLines.routes.js';
 import { irrigationRouter } from './routes/irrigation.routes.js';
 import { uploadsRouter } from './routes/uploads.routes.js';
@@ -82,6 +83,7 @@ apiRouter.use(requireAuth);
 
 apiRouter.use('/uploads', uploadsRouter);
 apiRouter.use('/gardens', gardensRouter);
+apiRouter.use('/feedback', feedbackRouter);
 apiRouter.use('/gardens/:gardenId/lines', irrigationLinesRouter);
 apiRouter.use('/irrigation', irrigationRouter);
 
