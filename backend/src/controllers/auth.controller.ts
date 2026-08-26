@@ -23,6 +23,26 @@ function buildVerificationToken() {
   return { token, tokenHash, expiresAt };
 }
 
+async function issueVerificationForUser(user: {
+  email: string;
+  name: string;
+  emailVerificationTokenHash?: string;
+  emailVerificationTokenExpiresAt?: Date;
+  save: () => Promise<unknown>;
+}) {
+  const verification = buildVerificationToken();
+  user.emailVerificationTokenHash = verification.tokenHash;
+  user.emailVerificationTokenExpiresAt = verification.expiresAt;
+  await user.save();
+
+  await sendVerificationEmail({
+    to: user.email,
+    name: user.name,
+    email: user.email,
+    token: verification.token,
+  });
+}
+
 function toAuthenticatedUser(user: { id: string; name: string; email: string }): AuthenticatedUser {
   return {
     id: user.id,
@@ -49,30 +69,31 @@ export async function signup(req: Request, res: Response) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const existing = await UserModel.findOne({ email: normalizedEmail }).lean();
+    const existing = await UserModel.findOne({ email: normalizedEmail });
 
     if (existing) {
-      return res.status(409).json({ message: 'email is already registered' });
+      if (existing.emailVerified) {
+        return res.status(409).json({ message: 'email is already registered' });
+      }
+
+      await issueVerificationForUser(existing);
+
+      return res.status(200).json({
+        message: 'Account already exists but is not verified. We sent a new verification email.',
+        requiresEmailVerification: true,
+      });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const verification = buildVerificationToken();
 
     const createdUser = await UserModel.create({
       name: name.trim(),
       email: normalizedEmail,
       passwordHash,
       emailVerified: false,
-      emailVerificationTokenHash: verification.tokenHash,
-      emailVerificationTokenExpiresAt: verification.expiresAt,
     });
 
-    await sendVerificationEmail({
-      to: normalizedEmail,
-      name: createdUser.name,
-      email: normalizedEmail,
-      token: verification.token,
-    });
+    await issueVerificationForUser(createdUser);
 
     return res.status(201).json({
       message: 'Account created. Check your email to verify your account before signing in.',
@@ -186,17 +207,11 @@ export async function resendVerification(req: Request, res: Response) {
     const user = await UserModel.findOne({ email: normalizedEmail });
 
     if (user && !user.emailVerified) {
-      const verification = buildVerificationToken();
-      user.emailVerificationTokenHash = verification.tokenHash;
-      user.emailVerificationTokenExpiresAt = verification.expiresAt;
-      await user.save();
-
-      await sendVerificationEmail({
-        to: user.email,
-        name: user.name,
-        email: user.email,
-        token: verification.token,
-      });
+      try {
+        await issueVerificationForUser(user);
+      } catch {
+        // Keep the generic response to avoid account enumeration details.
+      }
     }
 
     return res.json({

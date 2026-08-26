@@ -45,6 +45,10 @@ function isLocalDevOrigin(origin: string) {
 // create a new express application
 const app = express();
 
+// In production behind a single reverse proxy (e.g., Render), trust one hop
+// so req.ip and rate-limiters use the real client IP from X-Forwarded-For.
+app.set('trust proxy', 1);
+
 // helmet is a middleware that helps to secure the express application by setting various HTTP headers
 app.use(helmet());
 
