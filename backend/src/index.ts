@@ -4,6 +4,7 @@ import 'dotenv/config';
 import { connectToMongoDB, startServer } from './utils.js';
 import { authRouter } from './routes/auth.routes.js';
 import { gardensRouter } from './routes/gardens.routes.js';
+import { feedbackRouter } from './routes/feedback.routes.js';
 import { irrigationLinesRouter } from './routes/irrigationLines.routes.js';
 import { irrigationRouter } from './routes/irrigation.routes.js';
 import { uploadsRouter } from './routes/uploads.routes.js';
@@ -44,6 +45,10 @@ function isLocalDevOrigin(origin: string) {
 // create a new express application
 const app = express();
 
+// In production behind a single reverse proxy (e.g., Render), trust one hop
+// so req.ip and rate-limiters use the real client IP from X-Forwarded-For.
+app.set('trust proxy', 1);
+
 // helmet is a middleware that helps to secure the express application by setting various HTTP headers
 app.use(helmet());
 
@@ -82,6 +87,7 @@ apiRouter.use(requireAuth);
 
 apiRouter.use('/uploads', uploadsRouter);
 apiRouter.use('/gardens', gardensRouter);
+apiRouter.use('/feedback', feedbackRouter);
 apiRouter.use('/gardens/:gardenId/lines', irrigationLinesRouter);
 apiRouter.use('/irrigation', irrigationRouter);
 

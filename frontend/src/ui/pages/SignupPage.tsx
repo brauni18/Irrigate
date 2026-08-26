@@ -8,6 +8,12 @@ import { useSignupMutation } from '@/store/apis/users.api';
 import { AuthCardHeader, AuthPageLayout } from '@/ui/components';
 import { isValidEmailFormat, validatePasswordStrength } from '@/utils/authValidation';
 
+type ApiError = {
+  data?: {
+    message?: string;
+  };
+};
+
 export function SignupPage() {
   const navigate = useNavigate();
   const [name, setName] = useState('');
@@ -52,9 +58,10 @@ export function SignupPage() {
       setError('');
       setSuccessMessage(response.message);
       navigate(`${ROUTES.login}?email=${encodeURIComponent(normalizedEmail)}`, { replace: true });
-    } catch {
+    } catch (caughtError) {
+      const apiError = caughtError as ApiError;
       setSuccessMessage('');
-      setError('Could not create account. Check your input and try again.');
+      setError(apiError.data?.message ?? 'Could not create account. Check your input and try again.');
     }
   }
 

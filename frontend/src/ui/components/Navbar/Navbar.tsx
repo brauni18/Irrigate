@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Droplets, Menu, Bell, Plus, Bot, Search } from 'lucide-react';
+import { Droplets, Menu, MessageSquare, Plus, Bot, Search } from 'lucide-react';
 import { Link } from 'react-router';
 import { Button } from '@/shadcn/components/ui/button';
 import { cn } from '@/shadcn/lib/utils';
@@ -10,6 +10,7 @@ import {
 import { ROUTES } from '@/router/routes.consts';
 import type { NavbarProps } from '@/types/Navbar.types';
 import { GardenDialog } from '@/ui/components/GardenDialog';
+import { FeedbackDialog } from './FeedbackDialog.tsx';
 
 export function Navbar({
   title = DEFAULT_NAVBAR_TITLE,
@@ -19,6 +20,7 @@ export function Navbar({
   showMenuButton = DEFAULT_SHOW_MENU_BUTTON
 }: NavbarProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
 
   return (
     <>
@@ -27,6 +29,7 @@ export function Navbar({
         onOpenChange={setCreateDialogOpen}
         onCreated={onGardenCreated}
       />
+      <FeedbackDialog open={feedbackDialogOpen} onOpenChange={setFeedbackDialogOpen} />
     <header
       className={cn(
         'bg-background/95 supports-backdrop-filter:bg-background/80 sticky top-0 z-40 flex h-14 w-full items-center gap-3 border-b px-3 backdrop-blur sm:px-4',
@@ -71,8 +74,8 @@ export function Navbar({
         <Button type="button" variant="ghost" size="icon" aria-label="New" onClick={() => setCreateDialogOpen(true)}>
           <Plus className="size-5" />
         </Button>
-        <Button type="button" variant="ghost" size="icon" aria-label="Notifications">
-          <Bell className="size-5" />
+        <Button type="button" variant="ghost" size="icon" aria-label="Feedback" onClick={() => setFeedbackDialogOpen(true)}>
+          <MessageSquare className="size-5" />
         </Button>
         <Button type="button" variant="ghost" size="icon" aria-label="AI Assistant">
           <Bot className="size-5" />
