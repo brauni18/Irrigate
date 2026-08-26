@@ -24,6 +24,24 @@ function resolveVerifyUrl(email: string, token: string) {
   return `${resolveFrontendBaseUrl()}/verify-email?${params.toString()}`;
 }
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutHandle = setTimeout(() => {
+      reject(new Error(timeoutMessage));
+    }, timeoutMs);
+
+    promise
+      .then((value) => {
+        clearTimeout(timeoutHandle);
+        resolve(value);
+      })
+      .catch((error) => {
+        clearTimeout(timeoutHandle);
+        reject(error);
+      });
+  });
+}
+
 async function sendViaSmtp(to: string, subject: string, text: string): Promise<boolean> {
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT ?? 587);
@@ -33,19 +51,30 @@ async function sendViaSmtp(to: string, subject: string, text: string): Promise<b
 
   if (!host || !user || !pass || !from) return false;
 
+  console.log(`[smtp] preparing send to=${to} host=${host} port=${port} from=${from}`);
+
   const transporter = nodemailer.createTransport({
     host,
     port,
     secure: port === 465,
     auth: { user, pass },
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
   });
 
-  await transporter.sendMail({
-    from,
-    to,
-    subject,
-    text,
-  });
+  await withTimeout(
+    transporter.sendMail({
+      from,
+      to,
+      subject,
+      text,
+    }),
+    25_000,
+    'SMTP send timed out',
+  );
+
+  console.log(`[smtp] send success to=${to}`);
 
   return true;
 }

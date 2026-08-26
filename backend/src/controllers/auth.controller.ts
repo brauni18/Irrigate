@@ -35,12 +35,18 @@ async function issueVerificationForUser(user: {
   user.emailVerificationTokenExpiresAt = verification.expiresAt;
   await user.save();
 
-  await sendVerificationEmail({
-    to: user.email,
-    name: user.name,
-    email: user.email,
-    token: verification.token,
-  });
+  try {
+    await sendVerificationEmail({
+      to: user.email,
+      name: user.name,
+      email: user.email,
+      token: verification.token,
+    });
+    return true;
+  } catch (error) {
+    console.error('Failed to send verification email', error);
+    return false;
+  }
 }
 
 function toAuthenticatedUser(user: { id: string; name: string; email: string }): AuthenticatedUser {
@@ -52,7 +58,10 @@ function toAuthenticatedUser(user: { id: string; name: string; email: string }):
 }
 
 export async function signup(req: Request, res: Response) {
+  const requestId = randomBytes(6).toString('hex');
+
   try {
+    console.log(`[signup:${requestId}] start`);
     const { name, email, password } = req.body as Partial<SignupBody>;
 
     if (!name?.trim()) return res.status(400).json({ message: 'name is required' });
@@ -69,14 +78,27 @@ export async function signup(req: Request, res: Response) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+    console.log(`[signup:${requestId}] checking account for ${normalizedEmail}`);
     const existing = await UserModel.findOne({ email: normalizedEmail });
 
     if (existing) {
+      console.log(`[signup:${requestId}] existing account found, verified=${existing.emailVerified}`);
       if (existing.emailVerified) {
         return res.status(409).json({ message: 'email is already registered' });
       }
 
-      await issueVerificationForUser(existing);
+      console.log(`[signup:${requestId}] reissuing verification email`);
+      const verificationSent = await issueVerificationForUser(existing);
+
+      if (!verificationSent) {
+        console.log(`[signup:${requestId}] verification email failed for existing unverified account`);
+        return res.status(202).json({
+          message: 'Account exists but verification email could not be sent right now. Please try again shortly.',
+          requiresEmailVerification: true,
+        });
+      }
+
+      console.log(`[signup:${requestId}] verification email sent for existing unverified account`);
 
       return res.status(200).json({
         message: 'Account already exists but is not verified. We sent a new verification email.',
@@ -85,6 +107,7 @@ export async function signup(req: Request, res: Response) {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    console.log(`[signup:${requestId}] creating new user`);
 
     const createdUser = await UserModel.create({
       name: name.trim(),
@@ -93,13 +116,26 @@ export async function signup(req: Request, res: Response) {
       emailVerified: false,
     });
 
-    await issueVerificationForUser(createdUser);
+    console.log(`[signup:${requestId}] user created, sending verification email`);
+
+    const verificationSent = await issueVerificationForUser(createdUser);
+
+    if (!verificationSent) {
+      console.log(`[signup:${requestId}] verification email failed for new user`);
+      return res.status(202).json({
+        message: 'Account created, but verification email could not be sent right now. Please try again shortly.',
+        requiresEmailVerification: true,
+      });
+    }
+
+    console.log(`[signup:${requestId}] verification email sent for new user`);
 
     return res.status(201).json({
       message: 'Account created. Check your email to verify your account before signing in.',
       requiresEmailVerification: true,
     });
-  } catch {
+  } catch (error) {
+    console.error(`[signup:${requestId}] Signup failed`, error);
     return res.status(500).json({ message: 'server error' });
   }
 }
@@ -194,7 +230,10 @@ export async function verifyEmail(req: Request, res: Response) {
 }
 
 export async function resendVerification(req: Request, res: Response) {
+  const requestId = randomBytes(6).toString('hex');
+
   try {
+    console.log(`[resend-verification:${requestId}] start`);
     const { email } = req.body as Partial<ResendVerificationBody>;
 
     if (!email?.trim()) {
@@ -204,13 +243,17 @@ export async function resendVerification(req: Request, res: Response) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+    console.log(`[resend-verification:${requestId}] lookup ${normalizedEmail}`);
     const user = await UserModel.findOne({ email: normalizedEmail });
 
     if (user && !user.emailVerified) {
+      console.log(`[resend-verification:${requestId}] reissuing verification email`);
       try {
         await issueVerificationForUser(user);
+        console.log(`[resend-verification:${requestId}] verification email sent`);
       } catch {
         // Keep the generic response to avoid account enumeration details.
+        console.log(`[resend-verification:${requestId}] verification email failed`);
       }
     }
 
@@ -218,6 +261,7 @@ export async function resendVerification(req: Request, res: Response) {
       message: 'If your email exists and is not verified, we sent a new verification link.',
     });
   } catch {
+    console.error(`[resend-verification:${requestId}] server error`);
     return res.status(500).json({ message: 'server error' });
   }
 }
