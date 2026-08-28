@@ -14,7 +14,7 @@ type PendingRoute = {
   outlet: ReactNode;
 };
 
-const AUTH_ROUTE_ORDER = [ROUTES.login, ROUTES.signup, ROUTES.verifyEmail] as const;
+const AUTH_ROUTE_ORDER = [ROUTES.login, ROUTES.signup, ROUTES.betaPrivacy, ROUTES.signupSuccess, ROUTES.verifyEmail] as const;
 
 function getAuthRouteIndex(pathname: string) {
   const index = AUTH_ROUTE_ORDER.findIndex((route) => pathname.startsWith(route));

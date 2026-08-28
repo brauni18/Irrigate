@@ -2,6 +2,8 @@ export const ROUTES = {
   home: '/',
   login: '/login',
   signup: '/signup',
+  signupSuccess: '/signup-success',
+  betaPrivacy: '/beta-privacy',
   verifyEmail: '/verify-email',
   gardens: '/gardens',
   garden: '/gardens/:id',

@@ -2,6 +2,13 @@ export type SignupBody = {
   name: string;
   email: string;
   password: string;
+  profession: string;
+  professionOther?: string;
+  businessModels: string[];
+  businessModelOther?: string;
+  sectors: string[];
+  sectorOther?: string;
+  betaConsent: boolean;
 };
 
 export type LoginBody = {
