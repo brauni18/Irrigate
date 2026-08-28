@@ -5,7 +5,7 @@ export function isValidEmailFormat(email: string): boolean {
 }
 
 export function validatePasswordStrength(password: string): string | null {
-  if (password.length < 12) return 'Use at least 12 characters.';
+  if (password.length < 8) return 'Use at least 8 characters.';
   if (!/[a-z]/.test(password)) return 'Add at least one lowercase letter.';
   if (!/[A-Z]/.test(password)) return 'Add at least one uppercase letter.';
   if (!/\d/.test(password)) return 'Add at least one number.';

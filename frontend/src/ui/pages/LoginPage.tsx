@@ -168,7 +168,7 @@ export function LoginPage() {
           <p className="mt-5 text-center text-sm text-emerald-900/75">
             New here?{' '}
             <Link className="font-semibold text-emerald-950 underline underline-offset-4" to={ROUTES.signup}>
-              Create an account
+              Join our beta run
             </Link>
           </p>
         </section>

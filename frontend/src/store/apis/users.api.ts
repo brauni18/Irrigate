@@ -6,7 +6,21 @@ export const usersApi = createApi({
   reducerPath: 'usersApi',
   baseQuery: authBaseQuery,
   endpoints: (builder) => ({
-    signup: builder.mutation<SignupResponse, { name: string; email: string; password: string }>({
+    signup: builder.mutation<
+      SignupResponse,
+      {
+        name: string;
+        email: string;
+        password: string;
+        profession: string;
+        professionOther?: string;
+        businessModels: string[];
+        businessModelOther?: string;
+        sectors: string[];
+        sectorOther?: string;
+        betaConsent: boolean;
+      }
+    >({
       query: (body) => ({
         url: '/auth/signup',
         method: 'POST',

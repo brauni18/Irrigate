@@ -14,6 +14,30 @@ import type {
 } from '../types/auth.types.js';
 
 const EMAIL_VERIFICATION_WINDOW_MS = 1000 * 60 * 60 * 24;
+const ALLOWED_PROFESSIONS = new Set([
+  'gardener',
+  'landscape-architect',
+  'architect',
+  'contractor',
+  'other',
+]);
+const ALLOWED_BUSINESS_MODELS = new Set(['planning', 'construction', 'maintenance', 'other']);
+const ALLOWED_SECTORS = new Set(['private', 'public', 'agriculture', 'other']);
+
+function normalizeMultiSelect(values: unknown) {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      values
+        .filter((value): value is string => typeof value === 'string')
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  );
+}
 
 function buildVerificationToken() {
   const token = randomBytes(32).toString('hex');
@@ -62,7 +86,18 @@ export async function signup(req: Request, res: Response) {
 
   try {
     console.log(`[signup:${requestId}] start`);
-    const { name, email, password } = req.body as Partial<SignupBody>;
+    const {
+      name,
+      email,
+      password,
+      profession,
+      professionOther,
+      businessModels,
+      businessModelOther,
+      sectors,
+      sectorOther,
+      betaConsent,
+    } = req.body as Partial<SignupBody>;
 
     if (!name?.trim()) return res.status(400).json({ message: 'name is required' });
     if (!email?.trim()) return res.status(400).json({ message: 'email is required' });
@@ -70,6 +105,48 @@ export async function signup(req: Request, res: Response) {
 
     if (!password) {
       return res.status(400).json({ message: 'password is required' });
+    }
+
+    const normalizedProfession = profession?.trim().toLowerCase();
+    if (!normalizedProfession || !ALLOWED_PROFESSIONS.has(normalizedProfession)) {
+      return res.status(400).json({ message: 'profession is required' });
+    }
+
+    const normalizedProfessionOther = professionOther?.trim();
+    if (normalizedProfession === 'other' && !normalizedProfessionOther) {
+      return res.status(400).json({ message: 'professionOther is required when profession is other' });
+    }
+
+    const normalizedBusinessModels = normalizeMultiSelect(businessModels);
+    if (!normalizedBusinessModels.length) {
+      return res.status(400).json({ message: 'at least one business model is required' });
+    }
+
+    if (!normalizedBusinessModels.every((item) => ALLOWED_BUSINESS_MODELS.has(item))) {
+      return res.status(400).json({ message: 'invalid business model value' });
+    }
+
+    const normalizedBusinessModelOther = businessModelOther?.trim();
+    if (normalizedBusinessModels.includes('other') && !normalizedBusinessModelOther) {
+      return res.status(400).json({ message: 'businessModelOther is required when businessModels include other' });
+    }
+
+    const normalizedSectors = normalizeMultiSelect(sectors);
+    if (!normalizedSectors.length) {
+      return res.status(400).json({ message: 'at least one sector is required' });
+    }
+
+    if (!normalizedSectors.every((item) => ALLOWED_SECTORS.has(item))) {
+      return res.status(400).json({ message: 'invalid sector value' });
+    }
+
+    const normalizedSectorOther = sectorOther?.trim();
+    if (normalizedSectors.includes('other') && !normalizedSectorOther) {
+      return res.status(400).json({ message: 'sectorOther is required when sectors include other' });
+    }
+
+    if (betaConsent !== true) {
+      return res.status(400).json({ message: 'betaConsent must be accepted' });
     }
 
     const passwordPolicyError = validatePasswordStrength(password);
@@ -114,6 +191,13 @@ export async function signup(req: Request, res: Response) {
       email: normalizedEmail,
       passwordHash,
       emailVerified: false,
+      profession: normalizedProfession,
+      professionOther: normalizedProfession === 'other' ? normalizedProfessionOther : undefined,
+      businessModels: normalizedBusinessModels,
+      businessModelOther: normalizedBusinessModels.includes('other') ? normalizedBusinessModelOther : undefined,
+      sectors: normalizedSectors,
+      sectorOther: normalizedSectors.includes('other') ? normalizedSectorOther : undefined,
+      betaConsent: true,
     });
 
     console.log(`[signup:${requestId}] user created, sending verification email`);
