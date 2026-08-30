@@ -24,7 +24,7 @@ type ScheduleLine = {
   _id: Types.ObjectId | string;
   name: string;
   isPaused?: boolean;
-  createdAt: Date | string;
+  createdAt?: Date | string;
   config?: IrrigationLineConfig;
   calculation?: IrrigationCalculation;
 };
@@ -78,6 +78,12 @@ function clampIntervalDays(value?: number) {
   return Math.max(1, Math.floor(value));
 }
 
+function resolveAnchorDate(createdAt: Date | string | undefined, fallbackDate: Date) {
+  if (!createdAt) return fallbackDate;
+  const parsed = new Date(createdAt);
+  return Number.isFinite(parsed.getTime()) ? parsed : fallbackDate;
+}
+
 export function normalizeScheduleRules(rules?: Partial<ScheduleRules>): ScheduleRules {
   const safeRules = rules ?? DEFAULT_SCHEDULE_RULES;
   const preferredStartMinute = Math.min(
@@ -123,7 +129,7 @@ export function buildScheduleWindow(
 
     const runnableLines = scheduleEligibleLines.filter((line) => {
       const intervalDays = clampIntervalDays(line.config?.intervalDays);
-      const anchorDate = new Date(line.createdAt);
+      const anchorDate = resolveAnchorDate(line.createdAt, currentDate);
       return dateDiffInDays(anchorDate, currentDate) % intervalDays === 0;
     });
 
