@@ -1,8 +1,10 @@
 import type { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { GardenModel } from '../models/Garden.model.js';
+import { IrrigationLineModel } from '../models/IrrigationLine.model.js';
 import type { CreateGardenBody } from '../types/gardens.types.js';
 import { deleteStoredObject, resolveStoredPhotoUrl, StorageConfigurationError } from '../utils/r2.js';
+import { buildScheduleWindow, DEFAULT_SCHEDULE_RULES, normalizeScheduleRules } from '../domain/irrigation/schedule.js';
 
 function authUserId(req: Request, res: Response): string | null {
   if (!req.authUser?.id) {
@@ -27,7 +29,8 @@ export async function createGarden(req: Request, res: Response) {
     const userId = authUserId(req, res);
     if (!userId) return;
 
-    const { name, address, addressNumber, latitude, longitude, photoKey } = req.body as Partial<CreateGardenBody>;
+    const { name, address, addressNumber, isMainTapOn, latitude, longitude, photoKey } = req.body as Partial<CreateGardenBody>;
+    const normalizedRules = normalizeScheduleRules(req.body?.scheduleRules);
     const parsedLatitude = latitude == null ? undefined : Number(latitude);
     const parsedLongitude = longitude == null ? undefined : Number(longitude);
 
@@ -36,6 +39,8 @@ export async function createGarden(req: Request, res: Response) {
       name,
       address,
       addressNumber,
+      isMainTapOn: typeof isMainTapOn === 'boolean' ? isMainTapOn : true,
+      scheduleRules: normalizedRules,
       latitude: Number.isFinite(parsedLatitude) ? parsedLatitude : undefined,
       longitude: Number.isFinite(parsedLongitude) ? parsedLongitude : undefined,
       photo: photoKey?.trim() || undefined,
@@ -94,7 +99,8 @@ export async function updateGarden(req: Request, res: Response) {
     if (!userId) return;
 
     const { id } = req.params;
-    const { name, address, addressNumber, latitude, longitude, photoKey } = req.body as Partial<CreateGardenBody>;
+    const { name, address, addressNumber, isMainTapOn, latitude, longitude, photoKey } = req.body as Partial<CreateGardenBody>;
+    const normalizedRules = req.body?.scheduleRules ? normalizeScheduleRules(req.body.scheduleRules) : undefined;
     const parsedLatitude = latitude == null ? undefined : Number(latitude);
     const parsedLongitude = longitude == null ? undefined : Number(longitude);
     const existing = await GardenModel.findOne({ _id: id, ownerId: new Types.ObjectId(userId) });
@@ -112,6 +118,8 @@ export async function updateGarden(req: Request, res: Response) {
           ...(name && { name }),
           ...(address && { address }),
           ...(addressNumber !== undefined && { addressNumber }),
+          ...(typeof isMainTapOn === 'boolean' && { isMainTapOn }),
+          ...(normalizedRules && { scheduleRules: normalizedRules }),
           ...(Number.isFinite(parsedLatitude) && { latitude: parsedLatitude }),
           ...(Number.isFinite(parsedLongitude) && { longitude: parsedLongitude }),
           ...(nextPhotoKey && { photo: nextPhotoKey }),
@@ -134,6 +142,37 @@ export async function updateGarden(req: Request, res: Response) {
       return res.status(500).json({ message: 'upload storage is not configured' });
     }
 
+    return res.status(500).json({ message: 'server error' });
+  }
+}
+
+export async function getGardenSchedule(req: Request, res: Response) {
+  try {
+    const userId = authUserId(req, res);
+    if (!userId) return;
+
+    const { id } = req.params;
+    const garden = await GardenModel.findOne({ _id: id, ownerId: new Types.ObjectId(userId) }).select('_id scheduleRules');
+    if (!garden) return res.status(404).json({ message: 'garden not found' });
+
+    const parsedHistoryDays = Number(req.query.historyDays);
+    const parsedFutureDays = Number(req.query.futureDays);
+    const historyDays = Number.isFinite(parsedHistoryDays) ? Math.max(0, Math.floor(parsedHistoryDays)) : 1;
+    const futureDays = Number.isFinite(parsedFutureDays) ? Math.max(0, Math.floor(parsedFutureDays)) : 7;
+
+    const lines = await IrrigationLineModel.find({ gardenId: garden._id }).sort({ createdAt: 1 }).lean();
+    const rules = normalizeScheduleRules(garden.scheduleRules ?? DEFAULT_SCHEDULE_RULES);
+    const entries = buildScheduleWindow(lines, new Date(), historyDays, futureDays, rules);
+
+    await GardenModel.findByIdAndUpdate(garden._id, {
+      $set: {
+        scheduleRules: rules,
+        scheduleEntries: entries,
+      },
+    });
+
+    return res.json({ rules, entries });
+  } catch {
     return res.status(500).json({ message: 'server error' });
   }
 }

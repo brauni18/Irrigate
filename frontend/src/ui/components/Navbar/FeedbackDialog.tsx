@@ -114,7 +114,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2">
           {FEEDBACK_OPTIONS.map((option) => {
             const isSelected = option.key === selectedOption;
             const Icon = option.icon;

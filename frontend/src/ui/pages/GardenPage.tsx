@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
+  FileSpreadsheet,
   Droplets,
   FlaskConical,
   Plus,
@@ -21,7 +22,7 @@ import {
   DialogTitle,
 } from '@/shadcn/components/ui/dialog';
 import { useGSAP } from '@gsap/react';
-import { useGetGardenQuery } from '@/store/apis/gardens.api';
+import { useGetGardenQuery, useGetGardenScheduleQuery, useUpdateGardenMutation } from '@/store/apis/gardens.api';
 import {
   useCreateLineMutation,
   useDeleteLineMutation,
@@ -32,7 +33,6 @@ import {
   DEFAULT_SCHEDULE_RULES,
   SCHEDULE_FUTURE_DAYS,
   SCHEDULE_HISTORY_DAYS,
-  buildScheduleWindow,
   type ScheduleRules,
 } from '@/consts/GardenPage.consts';
 import { WeatherWidget } from './GardenPage/WeatherWidget';
@@ -42,6 +42,7 @@ import { AddLineDialog } from './GardenPage/AddLineDialog';
 import { ScheduleRulesDialog } from './GardenPage/ScheduleRulesDialog';
 import type { IrrigationLineConfig } from '@/types/irrigationLine.type';
 import { animateSectionReveal } from '@/utils/gsapAnimations';
+import { exportIrrigationReportExcel } from '@/utils/irrigationReportExcel';
 
 const FALLBACK_DIALOG_CONFIG: IrrigationLineConfig = {
   plantKey: 'trees',
@@ -78,20 +79,35 @@ function getLinePlantCount(line: { config?: IrrigationLineConfig; calculation?: 
   return Math.max(1, Math.round(fallbackDripCount));
 }
 
+function formatMinuteOfDay(totalMinutes: number) {
+  const normalized = ((Math.floor(totalMinutes) % (24 * 60)) + 24 * 60) % (24 * 60);
+  const hours = Math.floor(normalized / 60);
+  const minutes = normalized % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
 export function GardenPage() {
   const { id } = useParams<{ id: string }>();
   const [addLineOpen, setAddLineOpen] = useState(false);
   const [editingLine, setEditingLine] = useState<{ id: string; name: string; config: IrrigationLineConfig } | null>(null);
   const [linePendingDelete, setLinePendingDelete] = useState<{ id: string; name: string } | null>(null);
   const [usagePeriod, setUsagePeriod] = useState<'weekly' | 'monthly' | 'yearly'>('weekly');
-  const [closingAllLines, setClosingAllLines] = useState(false);
+  const [mainTapOverride, setMainTapOverride] = useState<boolean | null>(null);
+  const [forcedOffLineIds, setForcedOffLineIds] = useState<Set<string>>(new Set());
   const [scheduleRulesOpen, setScheduleRulesOpen] = useState(false);
-  const [scheduleRules, setScheduleRules] = useState<ScheduleRules>(DEFAULT_SCHEDULE_RULES);
+  const [scheduleRulesOverride, setScheduleRulesOverride] = useState<ScheduleRules | null>(null);
+  const [timeTick, setTimeTick] = useState(() => Date.now());
   const contentRef = useRef<HTMLDivElement | null>(null);
   const scheduleTabsRef = useRef<HTMLDivElement | null>(null);
 
   const { data: garden, isLoading: gardenLoading, isError: gardenError } = useGetGardenQuery(id!);
+  const { data: persistedSchedule, isLoading: scheduleLoading, refetch: refetchSchedule } = useGetGardenScheduleQuery({
+    id: id!,
+    historyDays: SCHEDULE_HISTORY_DAYS,
+    futureDays: SCHEDULE_FUTURE_DAYS,
+  });
   const { data: lines = [], isLoading: linesLoading } = useListLinesQuery(id!);
+  const [updateGarden, updateGardenState] = useUpdateGardenMutation();
   const [createLine, createState] = useCreateLineMutation();
   const [updateLine] = useUpdateLineMutation();
   const [deleteLine] = useDeleteLineMutation();
@@ -103,6 +119,14 @@ export function GardenPage() {
     },
     { dependencies: [id], scope: contentRef, revertOnUpdate: true },
   );
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setTimeTick(Date.now());
+    }, 30_000);
+
+    return () => window.clearInterval(timer);
+  }, []);
 
   const totalPlants = lines.reduce((sum, line) => sum + getLinePlantCount(line), 0);
   const totalHoseLengthMeters = lines.reduce((sum, line) => {
@@ -116,16 +140,27 @@ export function GardenPage() {
     const intervalDays = Math.max(1, Math.floor(line.config?.intervalDays ?? 1));
     return sum + litersPerRun * (365 / intervalDays);
   }, 0);
-  const scheduleReferenceDate = new Date();
+  const scheduleReferenceDate = new Date(timeTick);
+  const persistedMainTapOn = garden?.isMainTapOn ?? true;
+  const isMainTapOn = mainTapOverride ?? persistedMainTapOn;
+  const scheduleRules = scheduleRulesOverride ?? persistedSchedule?.rules ?? garden?.scheduleRules ?? DEFAULT_SCHEDULE_RULES;
+
+  useEffect(() => {
+    setMainTapOverride(null);
+    setScheduleRulesOverride(null);
+    setForcedOffLineIds(new Set());
+  }, [id]);
 
   async function handleAddLine(name: string, config: IrrigationLineConfig) {
     await createLine({ gardenId: id!, name, config }).unwrap();
+    await refetchSchedule();
     setAddLineOpen(false);
   }
 
   async function handleEditLine(name: string, config: IrrigationLineConfig) {
     if (!editingLine) return;
     await updateLine({ gardenId: id!, lineId: editingLine.id, name, config }).unwrap();
+    await refetchSchedule();
     setEditingLine(null);
   }
 
@@ -137,27 +172,80 @@ export function GardenPage() {
     });
   }
 
-  async function handleToggleLine(lineId: string, isActive: boolean) {
-    await updateLine({ gardenId: id!, lineId, isActive }).unwrap();
+  async function handleToggleLine(lineId: string, shouldRun: boolean, isScheduledNow: boolean) {
+    if (shouldRun) {
+      setForcedOffLineIds((current) => {
+        if (!current.has(lineId)) return current;
+        const next = new Set(current);
+        next.delete(lineId);
+        return next;
+      });
+      await updateLine({ gardenId: id!, lineId, isActive: true }).unwrap();
+      await refetchSchedule();
+      return;
+    }
+
+    if (isScheduledNow) {
+      setForcedOffLineIds((current) => new Set(current).add(lineId));
+    }
+
+    await updateLine({ gardenId: id!, lineId, isActive: false }).unwrap();
+    await refetchSchedule();
   }
 
-  async function handleToggleAllLines() {
-    if (lines.length === 0) return;
+  async function handleToggleLinePause(lineId: string, currentlyPaused: boolean) {
+    const nextPaused = !currentlyPaused;
 
-    const shouldEnableAll = lines.every((line) => !line.isActive);
-    const linesToUpdate = lines.filter((line) => line.isActive !== shouldEnableAll);
+    if (nextPaused) {
+      setForcedOffLineIds((current) => {
+        if (!current.has(lineId)) return current;
+        const next = new Set(current);
+        next.delete(lineId);
+        return next;
+      });
+      await updateLine({ gardenId: id!, lineId, isPaused: true, isActive: false }).unwrap();
+      await refetchSchedule();
+      return;
+    }
 
-    if (linesToUpdate.length === 0) return;
+    await updateLine({ gardenId: id!, lineId, isPaused: false }).unwrap();
+    await refetchSchedule();
+  }
 
-    setClosingAllLines(true);
+  async function handleToggleMainTap() {
+    if (!garden) return;
+
+    const nextState = !isMainTapOn;
+    setMainTapOverride(nextState);
+
     try {
-      await Promise.all(
-        linesToUpdate.map((line) =>
-          updateLine({ gardenId: id!, lineId: line._id, isActive: shouldEnableAll }).unwrap(),
-        ),
-      );
-    } finally {
-      setClosingAllLines(false);
+      await updateGarden({
+        id: garden._id,
+        body: {
+          isMainTapOn: nextState,
+        },
+      }).unwrap();
+      setMainTapOverride(null);
+    } catch {
+      setMainTapOverride(null);
+    }
+  }
+
+  async function handleApplyScheduleRules(nextRules: ScheduleRules) {
+    if (!garden) return;
+
+    setScheduleRulesOverride(nextRules);
+
+    try {
+      await updateGarden({
+        id: garden._id,
+        body: {
+          scheduleRules: nextRules,
+        },
+      }).unwrap();
+      setScheduleRulesOverride(null);
+    } catch {
+      setScheduleRulesOverride(null);
     }
   }
 
@@ -168,16 +256,49 @@ export function GardenPage() {
   async function confirmDeleteLine() {
     if (!linePendingDelete) return;
     await deleteLine({ gardenId: id!, lineId: linePendingDelete.id }).unwrap();
+    await refetchSchedule();
     setLinePendingDelete(null);
   }
 
-  const upcomingSchedule = buildScheduleWindow(
-    lines,
-    scheduleReferenceDate,
-    SCHEDULE_HISTORY_DAYS,
-    SCHEDULE_FUTURE_DAYS,
-    scheduleRules,
+  const fullUpcomingSchedule = persistedSchedule?.entries ?? [];
+  const upcomingSchedule = isMainTapOn ? fullUpcomingSchedule : [];
+
+  const todaysSchedule = fullUpcomingSchedule.filter((entry) => entry.dateKey === [
+    scheduleReferenceDate.getFullYear(),
+    String(scheduleReferenceDate.getMonth() + 1).padStart(2, '0'),
+    String(scheduleReferenceDate.getDate()).padStart(2, '0'),
+  ].join('-'));
+  const scheduledLineIdsNow = new Set(
+    todaysSchedule
+      .filter((entry) => {
+        const [year, month, day] = entry.dateKey.split('-').map(Number);
+        const [hours, minutes] = entry.time.split(':').map(Number);
+        const start = new Date(year, month - 1, day, hours, minutes, 0, 0).getTime();
+        const end = start + entry.duration * 60 * 1000;
+        const nowTs = scheduleReferenceDate.getTime();
+        return nowTs >= start && nowTs < end;
+      })
+      .map((entry) => entry.lineId),
   );
+
+  useEffect(() => {
+    setForcedOffLineIds((current) => {
+      if (current.size === 0) return current;
+
+      const next = new Set<string>();
+
+      current.forEach((lineId) => {
+        const line = lines.find((item) => item._id === lineId);
+        if (!line) return;
+        if (line.isActive) return;
+        if (scheduledLineIdsNow.has(lineId)) {
+          next.add(lineId);
+        }
+      });
+
+      return next.size === current.size ? current : next;
+    });
+  }, [lines, scheduledLineIdsNow]);
 
   function formatDayTab(dateKey: string, now: Date) {
     const [year, month, day] = dateKey.split('-').map(Number);
@@ -237,6 +358,14 @@ export function GardenPage() {
 
   const activeScheduleDay = scheduleDays.find((day) => day.key === selectedScheduleDay) ?? scheduleDays[0];
 
+  function handleExportExcel() {
+    exportIrrigationReportExcel({
+      gardenName: garden?.name ?? 'garden',
+      lines,
+      scheduleEntries: upcomingSchedule,
+    });
+  }
+
   if (gardenLoading) {
     return (
       <div className="flex min-h-85 items-center justify-center p-6">
@@ -292,23 +421,20 @@ export function GardenPage() {
         </div>
 
         {(() => {
-          const hasLines = lines.length > 0;
-          const allLinesOn = hasLines && lines.every((line) => line.isActive);
-
           return (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">All lines</span>
+              <span className="text-xs text-muted-foreground">Main tap</span>
               <button
                 type="button"
                 role="switch"
-                aria-checked={allLinesOn}
-                aria-label={allLinesOn ? 'Turn all lines off' : 'Turn all lines on'}
-                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${allLinesOn ? 'bg-emerald-500' : 'bg-slate-300'}`}
-                onClick={() => void handleToggleAllLines()}
-                disabled={closingAllLines || !hasLines}
+                aria-checked={isMainTapOn}
+                aria-label={isMainTapOn ? 'Turn main tap off' : 'Turn main tap on'}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${isMainTapOn ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                onClick={() => void handleToggleMainTap()}
+                disabled={updateGardenState.isLoading}
               >
                 <span
-                  className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${allLinesOn ? 'translate-x-6' : 'translate-x-1'}`}
+                  className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${isMainTapOn ? 'translate-x-6' : 'translate-x-1'}`}
                 />
               </button>
             </div>
@@ -355,23 +481,39 @@ export function GardenPage() {
                   Add your first line to start automating watering.
                 </p>
               </div>
-              <Button size="sm" onClick={() => setAddLineOpen(true)} className="mt-2 gap-2 rounded-full">
-                <Plus className="h-4 w-4" /> Add Line
+              <Button
+                onClick={() => setAddLineOpen(true)}
+                className="mt-2 h-11 w-full rounded-xl bg-slate-900 px-6 text-slate-50 shadow-sm transition-colors hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-slate-900/20"
+              >
+                Add Line
               </Button>
             </CardContent>
           </Card>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
-            {lines.map((line) => (
-              <IrrigationLineCard
-                key={line._id}
-                line={line}
-                onToggle={(isActive: boolean) => void handleToggleLine(line._id, isActive)}
-                onClick={() => openEditDialog(line)}
-                onEdit={() => openEditDialog(line)}
-                onDelete={() => handleDeleteLine(line._id, line.name)}
-              />
-            ))}
+            {lines.map((line) => {
+              const isScheduledNow = scheduledLineIdsNow.has(line._id);
+              const isPaused = Boolean(line.isPaused);
+              const isForcedOff = forcedOffLineIds.has(line._id);
+              const isRunningNow = isMainTapOn && !isPaused && !isForcedOff && (line.isActive || isScheduledNow);
+
+              return (
+                <IrrigationLineCard
+                  key={line._id}
+                  line={line}
+                  mainTapOn={isMainTapOn}
+                  isPaused={isPaused}
+                  isScheduledNow={isScheduledNow}
+                  isRunningNow={isRunningNow}
+                  isForcedOff={isForcedOff}
+                  onToggle={(shouldRun: boolean) => void handleToggleLine(line._id, shouldRun, isScheduledNow)}
+                  onTogglePause={() => void handleToggleLinePause(line._id, isPaused)}
+                  onClick={() => openEditDialog(line)}
+                  onEdit={() => openEditDialog(line)}
+                  onDelete={() => handleDeleteLine(line._id, line.name)}
+                />
+              );
+            })}
           </div>
         )}
       </section>
@@ -383,19 +525,36 @@ export function GardenPage() {
             <FlaskConical className="h-5 w-5" />
             Irrigation Schedule
           </h2>
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => setScheduleRulesOpen(true)}>
-            <Settings2 className="h-4 w-4" />
-            Schedule rules
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
+              onClick={handleExportExcel}
+              disabled={lines.length === 0}
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Export Excel
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
+              onClick={() => setScheduleRulesOpen(true)}
+            >
+              <Settings2 className="h-4 w-4" />
+              Schedule rules
+            </Button>
+          </div>
         </div>
-        <Card>
+        <Card className="transition-all duration-200 hover:border-border/90 hover:shadow-sm">
           <CardContent className="space-y-4 p-4">
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span className="rounded-full border border-border/80 bg-muted/40 px-2.5 py-1">
                 Skip: {scheduleRules.blockedWeekdays.length === 0 ? 'None' : scheduleRules.blockedWeekdays.length}
               </span>
               <span className="rounded-full border border-border/80 bg-muted/40 px-2.5 py-1">
-                Hours: {String(scheduleRules.preferredStartHour).padStart(2, '0')}:00 to {String(scheduleRules.preferredEndHour).padStart(2, '0')}:00
+                Hours: {formatMinuteOfDay(scheduleRules.preferredStartMinute)} to {formatMinuteOfDay(scheduleRules.preferredEndMinute)}
               </span>
               <span className="rounded-full border border-border/80 bg-muted/40 px-2.5 py-1">
                 {scheduleRules.lineSpacingMinutes < 0
@@ -405,8 +564,14 @@ export function GardenPage() {
                     : 'Back-to-back'}
               </span>
             </div>
-            {scheduleDays.length === 0 ? (
-              <div className="text-muted-foreground px-2 py-4 text-sm">No schedule matches the active lines and current rules.</div>
+            {scheduleLoading ? (
+              <div className="text-muted-foreground px-2 py-4 text-sm">Loading schedule...</div>
+            ) : scheduleDays.length === 0 ? (
+              <div className="text-muted-foreground px-2 py-4 text-sm">
+                {isMainTapOn
+                  ? 'No schedule matches the configured lines and current rules.'
+                  : 'Main tap is off. Scheduled irrigation is paused.'}
+              </div>
             ) : (
               <>
                 <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 p-1">
@@ -414,7 +579,7 @@ export function GardenPage() {
                     type="button"
                     aria-label="Scroll schedule left"
                     onClick={() => scrollScheduleTabs('left')}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-background text-muted-foreground transition-colors hover:text-foreground"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-background text-muted-foreground transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:text-foreground hover:shadow-sm"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
@@ -426,7 +591,7 @@ export function GardenPage() {
                         type="button"
                         aria-pressed={activeScheduleDay?.key === day.key}
                         onClick={() => setSelectedScheduleDay(day.key)}
-                        className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${activeScheduleDay?.key === day.key ? 'bg-background text-foreground shadow-sm ring-1 ring-border/80' : 'text-muted-foreground hover:bg-background/65 hover:text-foreground'}`}
+                        className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-200 ${activeScheduleDay?.key === day.key ? 'bg-background text-foreground shadow-sm ring-1 ring-border/80' : 'text-muted-foreground hover:-translate-y-0.5 hover:bg-background/65 hover:text-foreground hover:shadow-sm'}`}
                       >
                         {day.label}
                       </button>
@@ -437,7 +602,7 @@ export function GardenPage() {
                     type="button"
                     aria-label="Scroll schedule right"
                     onClick={() => scrollScheduleTabs('right')}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-background text-muted-foreground transition-colors hover:text-foreground"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-background text-muted-foreground transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:text-foreground hover:shadow-sm"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </button>
@@ -445,7 +610,7 @@ export function GardenPage() {
 
                 <div className="divide-border divide-y overflow-hidden rounded-xl border border-border/70 bg-background/50">
                   {activeScheduleDay?.entries.map((item) => (
-                    <div key={item.id} className="flex items-center gap-4 px-4 py-4 sm:px-5">
+                    <div key={item.id} className="flex items-center gap-4 px-4 py-4 transition-colors duration-200 hover:bg-muted/35 sm:px-5">
                       <div className="bg-muted flex w-16 shrink-0 flex-col items-center justify-center rounded-xl py-2 text-center">
                         <span className="text-base font-bold">{item.time}</span>
                         <span className="text-muted-foreground text-[10px] uppercase tracking-[0.08em]">{item.day}</span>
@@ -505,7 +670,9 @@ export function GardenPage() {
         open={scheduleRulesOpen}
         onOpenChange={setScheduleRulesOpen}
         value={scheduleRules}
-        onApply={setScheduleRules}
+        onApply={(nextRules) => {
+          void handleApplyScheduleRules(nextRules);
+        }}
       />
 
       <Dialog open={linePendingDelete !== null} onOpenChange={(open) => { if (!open) setLinePendingDelete(null); }}>

@@ -2,6 +2,7 @@ import type { ApiIrrigationLine } from '@/types/irrigationLine.type';
 
 export type ScheduleEntry = {
   id: string;
+  lineId: string;
   time: string;
   day: string;
   lineName: string;
@@ -22,8 +23,8 @@ export type WeatherIrrigationEntry = {
 
 export type ScheduleRules = {
   blockedWeekdays: number[];
-  preferredStartHour: number;
-  preferredEndHour: number;
+  preferredStartMinute: number;
+  preferredEndMinute: number;
   lineSpacingMinutes: number;
 };
 
@@ -49,8 +50,8 @@ const SCHEDULE_SLOT_MINUTES = 30;
 
 export const DEFAULT_SCHEDULE_RULES: ScheduleRules = {
   blockedWeekdays: [],
-  preferredStartHour: DEFAULT_SCHEDULE_START_HOUR,
-  preferredEndHour: DEFAULT_SCHEDULE_START_HOUR + 3,
+  preferredStartMinute: DEFAULT_SCHEDULE_START_HOUR * 60,
+  preferredEndMinute: (DEFAULT_SCHEDULE_START_HOUR + 3) * 60,
   lineSpacingMinutes: 10,
 };
 
@@ -100,14 +101,14 @@ function formatMinuteOfDay(totalMinutes: number) {
 }
 
 function clampScheduleRules(rules: ScheduleRules): ScheduleRules {
-  const preferredStartHour = Math.min(23, Math.max(0, Math.floor(rules.preferredStartHour)));
-  const preferredEndHour = Math.min(24, Math.max(preferredStartHour + 1, Math.floor(rules.preferredEndHour)));
+  const preferredStartMinute = Math.min(23 * 60 + 59, Math.max(0, Math.floor(rules.preferredStartMinute)));
+  const preferredEndMinute = Math.min(24 * 60, Math.max(preferredStartMinute + 1, Math.floor(rules.preferredEndMinute)));
   const lineSpacingMinutes = Math.min(180, Math.max(-120, Math.floor(rules.lineSpacingMinutes)));
 
   return {
     blockedWeekdays: Array.from(new Set(rules.blockedWeekdays)).filter((day) => day >= 0 && day <= 6),
-    preferredStartHour,
-    preferredEndHour,
+    preferredStartMinute,
+    preferredEndMinute,
     lineSpacingMinutes,
   };
 }
@@ -136,7 +137,7 @@ function getNextRunDate(anchorDate: Date, now: Date, intervalDays: number, slotI
 
 export function buildUpcomingSchedule(lines: ApiIrrigationLine[], now = new Date(), maxEntries = 8): ScheduleEntry[] {
   const scheduleCandidates: Array<ScheduleEntry & { timestamp: number }> = [];
-  const scheduleEligibleLines = lines.filter((line) => line.isActive && line.config && line.calculation);
+  const scheduleEligibleLines = lines.filter((line) => line.config && line.calculation);
 
   scheduleEligibleLines.forEach((line, lineIndex) => {
     const intervalDays = clampIntervalDays(line.config?.intervalDays);
@@ -147,6 +148,7 @@ export function buildUpcomingSchedule(lines: ApiIrrigationLine[], now = new Date
     for (let i = 0; i < runCount; i += 1) {
       scheduleCandidates.push({
         id: `${line._id}-${runDate.toISOString()}`,
+        lineId: line._id,
         time: formatTime(runDate),
         day: formatDay(runDate, now),
         lineName: line.name,
@@ -177,7 +179,7 @@ export function buildScheduleWindow(
   windowStart.setDate(windowStart.getDate() - Math.max(0, historyDays));
   const totalDays = Math.max(0, historyDays) + Math.max(0, futureDays) + 1;
 
-  const activeLines = lines.filter((line) => line.isActive && line.config && line.calculation);
+  const scheduleEligibleLines = lines.filter((line) => line.config && line.calculation);
   const entries: ScheduleWindowEntry[] = [];
 
   for (let dayOffset = 0; dayOffset < totalDays; dayOffset += 1) {
@@ -185,7 +187,7 @@ export function buildScheduleWindow(
 
     if (normalizedRules.blockedWeekdays.includes(currentDate.getDay())) continue;
 
-    const runnableLines = activeLines.filter((line) => {
+    const runnableLines = scheduleEligibleLines.filter((line) => {
       const intervalDays = clampIntervalDays(line.config?.intervalDays);
       const anchorDate = new Date(line.createdAt);
       return dateDiffInDays(anchorDate, currentDate) % intervalDays === 0;
@@ -193,8 +195,8 @@ export function buildScheduleWindow(
 
     if (runnableLines.length === 0) continue;
 
-    let minuteCursor = normalizedRules.preferredStartHour * 60;
-    const latestStartMinute = normalizedRules.preferredEndHour * 60;
+    let minuteCursor = normalizedRules.preferredStartMinute;
+    const latestStartMinute = normalizedRules.preferredEndMinute;
     const dateKey = toDateKey(currentDate);
 
     runnableLines.forEach((line) => {
@@ -203,6 +205,7 @@ export function buildScheduleWindow(
 
       entries.push({
         id: `${line._id}-${dateKey}-${startMinute}`,
+        lineId: line._id,
         dateKey,
         time: formatMinuteOfDay(startMinute),
         day: formatDay(currentDate, referenceDate),

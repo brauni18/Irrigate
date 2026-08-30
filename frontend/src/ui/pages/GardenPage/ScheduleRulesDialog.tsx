@@ -17,25 +17,85 @@ function clampHour(value: number, fallback: number) {
   return Math.min(23, Math.max(0, Math.floor(value)));
 }
 
+function clampMinute(value: number, fallback: number) {
+  if (!Number.isFinite(value)) return fallback;
+  return Math.min(59, Math.max(0, Math.floor(value)));
+}
+
+function splitMinuteOfDay(value: number) {
+  const normalized = Math.max(0, Math.floor(value));
+  const hours = Math.floor(normalized / 60);
+  const minutes = normalized % 60;
+  return { hours, minutes };
+}
+
+function toMinuteOfDay(hours: number, minutes: number) {
+  return hours * 60 + minutes;
+}
+
 function normalizeRules(rules: ScheduleRules): ScheduleRules {
-  const preferredStartHour = clampHour(rules.preferredStartHour, DEFAULT_SCHEDULE_RULES.preferredStartHour);
-  const preferredEndHour = Math.min(24, Math.max(preferredStartHour + 1, Math.floor(rules.preferredEndHour || DEFAULT_SCHEDULE_RULES.preferredEndHour)));
+  const fallbackStart = DEFAULT_SCHEDULE_RULES.preferredStartMinute;
+  const fallbackEnd = DEFAULT_SCHEDULE_RULES.preferredEndMinute;
+  const preferredStartMinute = Math.min(23 * 60 + 59, Math.max(0, Math.floor(rules.preferredStartMinute ?? fallbackStart)));
+  const preferredEndMinute = Math.min(24 * 60, Math.max(preferredStartMinute + 1, Math.floor(rules.preferredEndMinute ?? fallbackEnd)));
   const lineSpacingMinutes = Math.min(180, Math.max(-120, Math.floor(rules.lineSpacingMinutes || 0)));
 
   return {
     blockedWeekdays: Array.from(new Set(rules.blockedWeekdays)).sort((a, b) => a - b),
-    preferredStartHour,
-    preferredEndHour,
+    preferredStartMinute,
+    preferredEndMinute,
     lineSpacingMinutes,
   };
 }
 
-function toHourInput(value: number) {
-  return String(value).padStart(2, '0');
-}
-
 export function ScheduleRulesDialog({ open, onOpenChange, value, onApply }: ScheduleRulesDialogProps) {
   const [draft, setDraft] = useState<ScheduleRules>(value);
+  const startTime = splitMinuteOfDay(draft.preferredStartMinute);
+  const endTime = splitMinuteOfDay(draft.preferredEndMinute);
+
+  function updateStartHours(rawHours: number) {
+    const hours = clampHour(rawHours, startTime.hours);
+    const minutes = clampMinute(startTime.minutes, 0);
+    setDraft((current) => ({
+      ...current,
+      preferredStartMinute: toMinuteOfDay(hours, minutes),
+    }));
+  }
+
+  function updateStartMinutes(rawMinutes: number) {
+    const hours = clampHour(startTime.hours, 0);
+    const minutes = clampMinute(rawMinutes, startTime.minutes);
+    setDraft((current) => ({
+      ...current,
+      preferredStartMinute: toMinuteOfDay(hours, minutes),
+    }));
+  }
+
+  function updateEndHours(rawHours: number) {
+    const hours = Math.min(24, Math.max(0, Math.floor(rawHours)));
+    const minutes = hours === 24 ? 0 : clampMinute(endTime.minutes, 0);
+    setDraft((current) => ({
+      ...current,
+      preferredEndMinute: toMinuteOfDay(hours, minutes),
+    }));
+  }
+
+  function updateEndMinutes(rawMinutes: number) {
+    if (endTime.hours >= 24) {
+      setDraft((current) => ({
+        ...current,
+        preferredEndMinute: toMinuteOfDay(24, 0),
+      }));
+      return;
+    }
+
+    const hours = clampHour(endTime.hours, 0);
+    const minutes = clampMinute(rawMinutes, endTime.minutes);
+    setDraft((current) => ({
+      ...current,
+      preferredEndMinute: toMinuteOfDay(hours, minutes),
+    }));
+  }
 
   useEffect(() => {
     if (open) {
@@ -111,33 +171,50 @@ export function ScheduleRulesDialog({ open, onOpenChange, value, onApply }: Sche
                 <label htmlFor="schedule-start-hour" className="text-sm font-medium text-foreground">
                   Earliest start
                 </label>
-                <Input
-                  id="schedule-start-hour"
-                  type="number"
-                  min={0}
-                  max={23}
-                  value={toHourInput(draft.preferredStartHour)}
-                  onChange={(event) => setDraft((current) => ({
-                    ...current,
-                    preferredStartHour: Number(event.target.value),
-                  }))}
-                />
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                  <Input
+                    id="schedule-start-hour"
+                    type="number"
+                    min={0}
+                    max={23}
+                    value={String(startTime.hours).padStart(2, '0')}
+                    onChange={(event) => updateStartHours(Number(event.target.value))}
+                  />
+                  <span className="text-muted-foreground text-sm">:</span>
+                  <Input
+                    id="schedule-start-minute"
+                    type="number"
+                    min={0}
+                    max={59}
+                    value={String(startTime.minutes).padStart(2, '0')}
+                    onChange={(event) => updateStartMinutes(Number(event.target.value))}
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <label htmlFor="schedule-end-hour" className="text-sm font-medium text-foreground">
                   Latest start window
                 </label>
-                <Input
-                  id="schedule-end-hour"
-                  type="number"
-                  min={1}
-                  max={24}
-                  value={String(draft.preferredEndHour)}
-                  onChange={(event) => setDraft((current) => ({
-                    ...current,
-                    preferredEndHour: Number(event.target.value),
-                  }))}
-                />
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                  <Input
+                    id="schedule-end-hour"
+                    type="number"
+                    min={0}
+                    max={24}
+                    value={String(endTime.hours).padStart(2, '0')}
+                    onChange={(event) => updateEndHours(Number(event.target.value))}
+                  />
+                  <span className="text-muted-foreground text-sm">:</span>
+                  <Input
+                    id="schedule-end-minute"
+                    type="number"
+                    min={0}
+                    max={59}
+                    value={String(endTime.minutes).padStart(2, '0')}
+                    disabled={endTime.hours >= 24}
+                    onChange={(event) => updateEndMinutes(Number(event.target.value))}
+                  />
+                </div>
               </div>
             </div>
             <div className="space-y-2">
@@ -160,7 +237,7 @@ export function ScheduleRulesDialog({ open, onOpenChange, value, onApply }: Sche
               </p>
             </div>
             <p className="text-xs text-muted-foreground">
-              Example: 6 to 9 keeps scheduled runs between 06:00 and 09:00.
+              Example: 06:30 to 09:45 keeps scheduled runs between those times.
             </p>
           </section>
         </div>

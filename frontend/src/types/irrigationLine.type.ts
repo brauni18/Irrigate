@@ -76,6 +76,7 @@ export type ApiIrrigationLine = {
   gardenId: string;
   name: string;
   isActive: boolean;
+  isPaused?: boolean;
   config?: IrrigationLineConfig;
   calculation?: IrrigationCalculation;
   createdAt: string;
@@ -93,6 +94,7 @@ export type UpdateLinePayload = {
   lineId: string;
   name?: string;
   isActive?: boolean;
+  isPaused?: boolean;
   config?: IrrigationLineConfig;
 };
 

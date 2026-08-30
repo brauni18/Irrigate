@@ -18,7 +18,13 @@ export type WeatherWidgetProps = {
 
 export type IrrigationLineCardProps = {
   line: ApiIrrigationLine;
-  onToggle: (isActive: boolean) => void;
+  mainTapOn: boolean;
+  isPaused: boolean;
+  isScheduledNow: boolean;
+  isRunningNow: boolean;
+  isForcedOff: boolean;
+  onToggle: (shouldRun: boolean) => void;
+  onTogglePause: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onClick: () => void;
