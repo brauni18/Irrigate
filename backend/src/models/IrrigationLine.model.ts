@@ -6,6 +6,7 @@ type IrrigationLine = {
   gardenId: Types.ObjectId;
   name: string;
   isActive: boolean;
+  isPaused: boolean;
   config: IrrigationLineConfig;
   calculation: IrrigationCalculation;
 };
@@ -16,7 +17,8 @@ const IrrigationLineSchema = new Schema<IrrigationLine>(
   {
     gardenId: { type: Schema.Types.ObjectId, ref: 'Garden', required: true, index: true },
     name: { type: String, required: true, trim: true },
-    isActive: { type: Boolean, default: true },
+    isActive: { type: Boolean, default: false },
+    isPaused: { type: Boolean, default: false },
     config: {
       plantKey: { type: String, required: true },
       maintenanceLevel: { type: Number, required: true },

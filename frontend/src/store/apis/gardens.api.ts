@@ -1,8 +1,10 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import type {
   ApiGarden,
+  ApiGardenScheduleResponse,
   DeleteGardenResponse,
   GardenMutationBody,
+  GetGardenSchedulePayload,
   GardenPhotoUploadUrlResponse,
   RequestGardenPhotoUploadUrlPayload,
   UpdateGardenPayload,
@@ -23,6 +25,16 @@ export const gardensApi = createApi({
     getGarden: builder.query<ApiGarden, string>({
       query: (id) => `/gardens/${id}`,
       providesTags: (_result, _error, id) => [{ type: 'Garden', id }],
+    }),
+    getGardenSchedule: builder.query<ApiGardenScheduleResponse, GetGardenSchedulePayload>({
+      query: ({ id, historyDays, futureDays }) => {
+        const params = new URLSearchParams();
+        if (Number.isFinite(historyDays)) params.set('historyDays', String(historyDays));
+        if (Number.isFinite(futureDays)) params.set('futureDays', String(futureDays));
+        const query = params.toString();
+        return `/gardens/${id}/schedule${query ? `?${query}` : ''}`;
+      },
+      providesTags: (_result, _error, { id }) => [{ type: 'Garden', id }],
     }),
     requestGardenPhotoUploadUrl: builder.mutation<
       GardenPhotoUploadUrlResponse,
@@ -63,6 +75,7 @@ export const gardensApi = createApi({
 export const {
   useListGardensQuery,
   useGetGardenQuery,
+  useGetGardenScheduleQuery,
   useRequestGardenPhotoUploadUrlMutation,
   useCreateGardenMutation,
   useUpdateGardenMutation,

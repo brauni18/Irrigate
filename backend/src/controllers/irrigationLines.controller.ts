@@ -64,6 +64,8 @@ export async function createLine(req: Request<{ gardenId: string }>, res: Respon
     const line = await IrrigationLineModel.create({
       gardenId: new Types.ObjectId(gardenId),
       name: name.trim(),
+      isActive: false,
+      isPaused: false,
       config: lineConfig,
       calculation: calculateIrrigation(lineConfig),
     });
@@ -99,7 +101,7 @@ export async function updateLine(req: Request<{ lineId: string }>, res: Response
     if (!userId) return;
 
     const { lineId } = req.params;
-    const { name, isActive, config } = req.body as UpdateIrrigationLineBody;
+    const { name, isActive, isPaused, config } = req.body as UpdateIrrigationLineBody;
 
     const current = await IrrigationLineModel.findById(lineId);
     if (!current) return res.status(404).json({ message: 'line not found' });
@@ -122,15 +124,23 @@ export async function updateLine(req: Request<{ lineId: string }>, res: Response
       return res.status(400).json({ message: 'invalid irrigation config', errors: configErrors });
     }
 
+    const updateSet: Record<string, unknown> = {
+      ...(name !== undefined && { name: name.trim() }),
+      ...(typeof isPaused === 'boolean' && { isPaused }),
+      config: mergedConfig,
+      calculation: calculateIrrigation(mergedConfig),
+    };
+
+    if (isPaused === true) {
+      updateSet.isActive = false;
+    } else if (isActive !== undefined) {
+      updateSet.isActive = isActive;
+    }
+
     const updated = await IrrigationLineModel.findByIdAndUpdate(
       lineId,
       {
-        $set: {
-          ...(name !== undefined && { name: name.trim() }),
-          ...(isActive !== undefined && { isActive }),
-          config: mergedConfig,
-          calculation: calculateIrrigation(mergedConfig),
-        },
+        $set: updateSet,
       },
       { new: true },
     );

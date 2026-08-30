@@ -8,6 +8,7 @@ export type CreateIrrigationLineBody = {
 export type UpdateIrrigationLineBody = {
   name?: string;
   isActive?: boolean;
+  isPaused?: boolean;
   config?: IrrigationLineConfigPatch;
 };
 
