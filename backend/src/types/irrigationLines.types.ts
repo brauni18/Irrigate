@@ -1,4 +1,5 @@
 import type { IrrigationLineConfig, IrrigationLineConfigPatch } from '../domain/irrigation/config.js';
+import type { IrrigationCalculationMode, LegacyCalculationInput } from '../domain/irrigation/calculate.js';
 
 export type CreateIrrigationLineBody = {
   name: string;
@@ -14,4 +15,6 @@ export type UpdateIrrigationLineBody = {
 
 export type CalculateIrrigationBody = {
   config: IrrigationLineConfig;
+  mode?: IrrigationCalculationMode;
+  legacy?: LegacyCalculationInput;
 };

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import {
   Dialog,
@@ -29,7 +29,6 @@ import { aggregateSprinklerConfigs, findPlantOption, formatDuration, getResolved
 import { CalculationPreviewSection } from './sections/CalculationPreviewSection';
 import { ConfigurationSection } from './sections/ConfigurationSection';
 import { DialogActionsSection } from './sections/DialogActionsSection';
-import { LineNameSection } from './sections/LineNameSection';
 
 type CalculateErrorPayload = {
   message?: string;
@@ -62,10 +61,18 @@ export function AddLineDialog({ open, onOpenChange, onConfirm, isLoading, initia
 
   const [name, setName] = useState('');
   const [nameError, setNameError] = useState('');
+  const [isEditingName, setIsEditingName] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
   const [techniqueMenuOpen, setTechniqueMenuOpen] = useState(false);
   const [config, setConfig] = useState<IrrigationLineConfig>(DEFAULT_ADD_LINE_CONFIG);
   const [calculation, setCalculation] = useState<IrrigationCalculation | null>(null);
   const [calculationError, setCalculationError] = useState<string | null>(null);
+  const [configurationMode, setConfigurationMode] = useState<'modern' | 'legacy'>('modern');
+  const [legacyConfig, setLegacyConfig] = useState({
+    selectedWeekdays: ['Mon', 'Wed', 'Fri'],
+    durationMinutes: 20,
+    areaSizeM2: null as number | null,
+  });
 
   const { data: catalog } = useGetIrrigationCatalogQuery();
   const [calculateIrrigation, { isLoading: isCalculating }] = useCalculateIrrigationMutation();
@@ -218,9 +225,61 @@ export function AddLineDialog({ open, onOpenChange, onConfirm, isLoading, initia
       setName(initialName ?? '');
       setConfig(toEditableSprinklerConfig({ ...DEFAULT_ADD_LINE_CONFIG, ...initialConfig }));
       setNameError('');
+      setIsEditingName(false);
       setTechniqueMenuOpen(false);
+      setConfigurationMode(initialConfig?.calculationMode ?? 'modern');
+      setLegacyConfig({
+        selectedWeekdays: initialConfig?.legacy?.selectedWeekdays ?? ['Mon', 'Wed', 'Fri'],
+        durationMinutes: initialConfig?.legacy?.durationMinutes ?? 20,
+        areaSizeM2: initialConfig?.legacy?.areaSizeM2 ?? null,
+      });
     }
   }, [open, initialName, initialConfig]);
+
+  useEffect(() => {
+    setConfig((current) => {
+      const nextTechniqueKey = configurationMode === 'legacy' ? 'drip' : current.techniqueKey;
+
+      if (
+        current.calculationMode === configurationMode
+        && current.techniqueKey === nextTechniqueKey
+      ) {
+        return current;
+      }
+
+      return {
+        ...current,
+        calculationMode: configurationMode,
+        techniqueKey: nextTechniqueKey,
+        sprinklerCount: configurationMode === 'legacy' ? undefined : current.sprinklerCount,
+        sprinklerConfigs: configurationMode === 'legacy' ? undefined : current.sprinklerConfigs,
+      };
+    });
+  }, [configurationMode]);
+
+  useEffect(() => {
+    setConfig((current) => {
+      const nextArea = legacyConfig.areaSizeM2;
+      const shouldUpdateArea = current.calculationMode === 'legacy' && Number.isFinite(nextArea) && (nextArea ?? 0) > 0;
+
+      return {
+        ...current,
+        legacy: {
+          selectedWeekdays: legacyConfig.selectedWeekdays,
+          durationMinutes: legacyConfig.durationMinutes,
+          areaSizeM2: legacyConfig.areaSizeM2,
+        },
+        ...(shouldUpdateArea ? { areaSizeM2: nextArea ?? current.areaSizeM2 } : {}),
+      };
+    });
+  }, [legacyConfig]);
+
+  useEffect(() => {
+    if (!isEditingName) return;
+
+    nameInputRef.current?.focus();
+    nameInputRef.current?.select();
+  }, [isEditingName]);
 
   useEffect(() => {
     if (!open) return;
@@ -242,7 +301,17 @@ export function AddLineDialog({ open, onOpenChange, onConfirm, isLoading, initia
     const timer = setTimeout(() => {
       void (async () => {
         try {
-          const response = await calculateIrrigation({ config: preparedConfig }).unwrap();
+          const response = await calculateIrrigation({
+            config: preparedConfig,
+            mode: configurationMode,
+            legacy: configurationMode === 'legacy'
+              ? {
+                durationMinutes: legacyConfig.durationMinutes,
+                areaSizeM2: legacyConfig.areaSizeM2,
+                selectedWeekdays: legacyConfig.selectedWeekdays,
+              }
+              : undefined,
+          }).unwrap();
           setCalculation(response.calculation);
           setCalculationError(null);
         } catch (error) {
@@ -253,7 +322,7 @@ export function AddLineDialog({ open, onOpenChange, onConfirm, isLoading, initia
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [open, preparedConfig, calculateIrrigation]);
+  }, [open, preparedConfig, calculateIrrigation, configurationMode, legacyConfig]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -269,6 +338,8 @@ export function AddLineDialog({ open, onOpenChange, onConfirm, isLoading, initia
   function handleOpenChange(isOpen: boolean) {
     onOpenChange(isOpen);
   }
+
+  const dialogTitle = isEditMode ? (name.trim() || initialName?.trim() || 'Irrigation Line') : ADD_LINE_DIALOG_TITLE;
 
   const contextValue = useMemo(
     () => ({
@@ -298,6 +369,10 @@ export function AddLineDialog({ open, onOpenChange, onConfirm, isLoading, initia
       isCalculating,
       preparedConfig,
       formattedDuration,
+      configurationMode,
+      setConfigurationMode,
+      legacyConfig,
+      setLegacyConfig,
       onCancel: () => handleOpenChange(false),
     }),
     [
@@ -323,6 +398,8 @@ export function AddLineDialog({ open, onOpenChange, onConfirm, isLoading, initia
       isCalculating,
       preparedConfig,
       formattedDuration,
+      configurationMode,
+      legacyConfig,
     ],
   );
 
@@ -332,14 +409,39 @@ export function AddLineDialog({ open, onOpenChange, onConfirm, isLoading, initia
         <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border border-border/80 bg-card p-0 shadow-xl sm:max-w-205">
           <div className="border-b border-border/70 bg-linear-to-r from-primary/6 via-transparent to-accent/10 px-6 py-5">
             <DialogHeader className="space-y-1.5">
-              <DialogTitle className="text-xl font-semibold tracking-tight">
-                {isEditMode ? 'Edit Irrigation Line' : ADD_LINE_DIALOG_TITLE}
-              </DialogTitle>
+              <div className="flex items-center justify-between gap-3">
+                {isEditMode && isEditingName ? (
+                  <input
+                    ref={nameInputRef}
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    onBlur={() => setIsEditingName(false)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        setIsEditingName(false);
+                      }
+
+                      if (event.key === 'Escape') {
+                        setIsEditingName(false);
+                      }
+                    }}
+                    className="w-full rounded-lg border border-border bg-background/80 px-3 py-2 text-xl font-semibold tracking-tight text-foreground shadow-sm outline-none ring-0 focus:border-ring"
+                    aria-label="Edit line name"
+                  />
+                ) : (
+                  <DialogTitle
+                    className="cursor-text text-xl font-semibold tracking-tight"
+                    onDoubleClick={isEditMode ? () => setIsEditingName(true) : undefined}
+                  >
+                    {dialogTitle}
+                  </DialogTitle>
+                )}
+              </div>
             </DialogHeader>
           </div>
 
           <form onSubmit={(e) => void handleSubmit(e)} className="space-y-5 px-6 pb-6 pt-5">
-            <LineNameSection />
             <ConfigurationSection />
             <CalculationPreviewSection />
             <DialogActionsSection />

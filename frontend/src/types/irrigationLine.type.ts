@@ -11,6 +11,12 @@ export type SprinklerConfig = {
   sprinklerCount: number;
 };
 
+export type LegacyIrrigationConfig = {
+  selectedWeekdays: string[];
+  durationMinutes: number;
+  areaSizeM2?: number | null;
+};
+
 export type IrrigationLineConfig = {
   plantKey: string;
   maintenanceLevel: number; // 0–100
@@ -25,6 +31,8 @@ export type IrrigationLineConfig = {
     distance: number;       // meters between drippers/sprinkler spacing (default 0.5/4)
     flowRate: number;       // L/h per emitter/head (default 2.3/30)
   };
+  calculationMode?: 'modern' | 'legacy';
+  legacy?: LegacyIrrigationConfig;
 };
 
 export type IrrigationCalculation = {
@@ -69,6 +77,20 @@ export type IrrigationCatalogResponse = {
 
 export type CalculateIrrigationResponse = {
   calculation: IrrigationCalculation;
+};
+
+export type IrrigationCalculationMode = 'modern' | 'legacy';
+
+export type LegacyCalculationRequest = {
+  durationMinutes: number;
+  areaSizeM2?: number | null;
+  selectedWeekdays?: string[];
+};
+
+export type CalculateIrrigationRequest = {
+  config: IrrigationLineConfig;
+  mode?: IrrigationCalculationMode;
+  legacy?: LegacyCalculationRequest;
 };
 
 export type ApiIrrigationLine = {

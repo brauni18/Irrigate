@@ -1,48 +1,39 @@
-import { useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
-import { ChevronDown, Settings2 } from 'lucide-react';
-import { IntervalAreaSection } from './IntervalAreaSection';
-import { LocationSection } from './LocationSection';
-import { MaintenanceLevelSection } from './MaintenanceLevelSection';
-import { PlantTypeSection } from './PlantTypeSection';
-import { TechniqueSettingsSection } from './TechniqueSettingsSection';
+import { LegacyConfigurationPanel } from './LegacyConfigurationPanel';
+import { ModernConfigurationPanel } from './ModernConfigurationPanel';
+import { useAddLineDialogContext } from '../context';
+
+const tabs = [
+  { key: 'modern', label: 'Configuration' },
+  { key: 'legacy', label: 'Old School Configuration' },
+] as const;
+
 export function ConfigurationSection() {
-  const [isOpen, setIsOpen] = useState(true);
+  const { configurationMode, setConfigurationMode } = useAddLineDialogContext();
 
   return (
     <div className="space-y-4 rounded-2xl border border-border/80 bg-muted/25 p-4">
-      <button
-        type="button"
-        aria-expanded={isOpen}
-        aria-controls="configuration-section-panel"
-        onClick={() => setIsOpen((prev) => !prev)}
-        className="flex w-full items-center justify-between text-left"
-      >
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-          <Settings2 className="size-4" />
-          Configuration
-        </h3>
-        <ChevronDown className={`size-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
+      <div className="flex rounded-xl border border-border/80 bg-background/60 p-1">
+        {tabs.map((tab) => {
+          const isActive = configurationMode === tab.key;
 
-      <AnimatePresence initial={false}>
-        {isOpen ? (
-          <motion.div
-            id="configuration-section-panel"
-            initial={{ opacity: 0, y: -8, height: 0 }}
-            animate={{ opacity: 1, y: 0, height: 'auto' }}
-            exit={{ opacity: 0, y: -8, height: 0 }}
-            transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="grid gap-4 overflow-hidden"
-          >
-            <PlantTypeSection />
-            <MaintenanceLevelSection />
-            <LocationSection />
-            <IntervalAreaSection />
-            <TechniqueSettingsSection />
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setConfigurationMode(tab.key)}
+              className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {configurationMode === 'modern' ? <ModernConfigurationPanel /> : <LegacyConfigurationPanel />}
     </div>
   );
 }
