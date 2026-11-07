@@ -55,7 +55,9 @@ export async function createLine(req: Request<{ gardenId: string }>, res: Respon
     const lineConfig = normalizeIrrigationConfig(
       translateIncomingSprinklerFlowUnits(config ?? DEFAULT_IRRIGATION_LINE_CONFIG),
     );
-    const configErrors = validateIrrigationConfig(lineConfig);
+    const configErrors = validateIrrigationConfig(lineConfig, {
+      relaxTechniqueOptionValidation: lineConfig.calculationMode === 'legacy',
+    });
 
     if (configErrors.length > 0) {
       return res.status(400).json({ message: 'invalid irrigation config', errors: configErrors });
@@ -67,7 +69,16 @@ export async function createLine(req: Request<{ gardenId: string }>, res: Respon
       isActive: false,
       isPaused: false,
       config: lineConfig,
-      calculation: calculateIrrigation(lineConfig),
+      calculation: calculateIrrigation(lineConfig, {
+        mode: lineConfig.calculationMode ?? 'modern',
+        legacy: lineConfig.legacy
+          ? {
+            durationMinutes: lineConfig.legacy.durationMinutes,
+            areaSizeM2: lineConfig.legacy.areaSizeM2,
+            selectedWeekdays: lineConfig.legacy.selectedWeekdays,
+          }
+          : undefined,
+      }),
     });
     return res.status(201).json(line);
   } catch {
@@ -118,7 +129,9 @@ export async function updateLine(req: Request<{ lineId: string }>, res: Response
           : config,
       ),
     );
-    const configErrors = validateIrrigationConfig(mergedConfig);
+    const configErrors = validateIrrigationConfig(mergedConfig, {
+      relaxTechniqueOptionValidation: mergedConfig.calculationMode === 'legacy',
+    });
 
     if (configErrors.length > 0) {
       return res.status(400).json({ message: 'invalid irrigation config', errors: configErrors });
@@ -128,7 +141,16 @@ export async function updateLine(req: Request<{ lineId: string }>, res: Response
       ...(name !== undefined && { name: name.trim() }),
       ...(typeof isPaused === 'boolean' && { isPaused }),
       config: mergedConfig,
-      calculation: calculateIrrigation(mergedConfig),
+      calculation: calculateIrrigation(mergedConfig, {
+        mode: mergedConfig.calculationMode ?? 'modern',
+        legacy: mergedConfig.legacy
+          ? {
+            durationMinutes: mergedConfig.legacy.durationMinutes,
+            areaSizeM2: mergedConfig.legacy.areaSizeM2,
+            selectedWeekdays: mergedConfig.legacy.selectedWeekdays,
+          }
+          : undefined,
+      }),
     };
 
     if (isPaused === true) {

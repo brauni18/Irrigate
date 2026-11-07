@@ -16,6 +16,12 @@ export type SprinklerConfig = {
   sprinklerCount: number;
 };
 
+export type LegacyIrrigationConfig = {
+  selectedWeekdays: string[];
+  durationMinutes: number;
+  areaSizeM2?: number | null;
+};
+
 export type IrrigationLineConfig = {
   plantKey: string;
   maintenanceLevel: number;
@@ -26,6 +32,8 @@ export type IrrigationLineConfig = {
   sprinklerCount?: number;
   sprinklerConfigs?: SprinklerConfig[];
   techniqueKey: 'drip' | 'sprinkler';
+  calculationMode?: 'modern' | 'legacy';
+  legacy?: LegacyIrrigationConfig;
   techniqueConfig: TechniqueConfig;
 };
 
@@ -243,8 +251,16 @@ export function getEffectiveIrrigationAreaM2(config: IrrigationLineConfig) {
   return normalizeIrrigationConfig(config).areaSizeM2;
 }
 
-export function validateIrrigationConfig(config: IrrigationLineConfig): string[] {
+type IrrigationValidationOptions = {
+  relaxTechniqueOptionValidation?: boolean;
+};
+
+export function validateIrrigationConfig(
+  config: IrrigationLineConfig,
+  options?: IrrigationValidationOptions,
+): string[] {
   const errors: string[] = [];
+  const relaxTechniqueOptionValidation = options?.relaxTechniqueOptionValidation ?? false;
 
   const normalized = normalizeIrrigationConfig(config);
   const plant = PLANTS_CATALOG[normalized.plantKey];
@@ -316,6 +332,7 @@ export function validateIrrigationConfig(config: IrrigationLineConfig): string[]
 
   if (
     normalized.techniqueKey !== 'sprinkler'
+    && !relaxTechniqueOptionValidation
     && !activeTechniqueCatalog.distanceOptions.includes(normalized.techniqueConfig.distance)
   ) {
     errors.push(`Invalid ${activeTechniqueCatalog.key} distance option`);
@@ -331,6 +348,7 @@ export function validateIrrigationConfig(config: IrrigationLineConfig): string[]
 
   if (
     normalized.techniqueKey !== 'sprinkler'
+    && !relaxTechniqueOptionValidation
     && !activeTechniqueCatalog.flowOptions.includes(normalized.techniqueConfig.flowRate)
   ) {
     errors.push(`Invalid ${activeTechniqueCatalog.key} flow option`);

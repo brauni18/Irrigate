@@ -35,6 +35,12 @@ const IrrigationLineSchema = new Schema<IrrigationLine>(
         },
       ],
       techniqueKey: { type: String, required: true },
+      calculationMode: { type: String, enum: ['modern', 'legacy'] },
+      legacy: {
+        selectedWeekdays: [{ type: String }],
+        durationMinutes: { type: Number },
+        areaSizeM2: { type: Number },
+      },
       techniqueConfig: {
         distance: { type: Number, required: true },
         flowRate: { type: Number, required: true },

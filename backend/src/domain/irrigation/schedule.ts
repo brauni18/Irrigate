@@ -78,6 +78,29 @@ function clampIntervalDays(value?: number) {
   return Math.max(1, Math.floor(value));
 }
 
+const WEEKDAY_TO_INDEX: Record<string, number> = {
+  Sun: 0,
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+};
+
+function resolveLegacyWeekdays(config?: IrrigationLineConfig) {
+  if (!config || config.calculationMode !== 'legacy') return null;
+  const selected = config.legacy?.selectedWeekdays ?? [];
+  if (!Array.isArray(selected) || selected.length === 0) return null;
+
+  const mapped = selected
+    .map((day) => WEEKDAY_TO_INDEX[day])
+    .filter((day): day is number => Number.isInteger(day) && day >= 0 && day <= 6);
+
+  if (mapped.length === 0) return null;
+  return new Set(mapped);
+}
+
 function resolveAnchorDate(createdAt: Date | string | undefined, fallbackDate: Date) {
   if (!createdAt) return fallbackDate;
   const parsed = new Date(createdAt);
@@ -128,6 +151,11 @@ export function buildScheduleWindow(
     if (normalizedRules.blockedWeekdays.includes(currentDate.getDay())) continue;
 
     const runnableLines = scheduleEligibleLines.filter((line) => {
+      const legacyWeekdays = resolveLegacyWeekdays(line.config);
+      if (legacyWeekdays) {
+        return legacyWeekdays.has(currentDate.getDay());
+      }
+
       const intervalDays = clampIntervalDays(line.config?.intervalDays);
       const anchorDate = resolveAnchorDate(line.createdAt, currentDate);
       return dateDiffInDays(anchorDate, currentDate) % intervalDays === 0;

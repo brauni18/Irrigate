@@ -2,6 +2,14 @@ import { createContext, useContext } from 'react';
 import type { CatalogPlants, SelectOption } from '@/types/AddLineDialog.types';
 import type { IrrigationCalculation, IrrigationLineConfig, SprinklerConfig } from '@/types/irrigationLine.type';
 
+export type ConfigurationMode = 'modern' | 'legacy';
+
+export type LegacyConfigurationState = {
+  selectedWeekdays: string[];
+  durationMinutes: number;
+  areaSizeM2: number | null;
+};
+
 export type AddLineDialogContextValue = {
   isEditMode: boolean;
   isLoading: boolean;
@@ -29,6 +37,10 @@ export type AddLineDialogContextValue = {
   isCalculating: boolean;
   preparedConfig: IrrigationLineConfig;
   formattedDuration: { padded: string; compact: string } | null;
+  configurationMode: ConfigurationMode;
+  setConfigurationMode: (value: ConfigurationMode | ((prev: ConfigurationMode) => ConfigurationMode)) => void;
+  legacyConfig: LegacyConfigurationState;
+  setLegacyConfig: (value: LegacyConfigurationState | ((prev: LegacyConfigurationState) => LegacyConfigurationState)) => void;
   onCancel: () => void;
 };
 

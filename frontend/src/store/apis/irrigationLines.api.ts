@@ -2,10 +2,10 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import type {
   ApiIrrigationLine,
   CalculateIrrigationResponse,
+  CalculateIrrigationRequest,
   CreateLinePayload,
   DeleteLinePayload,
   IrrigationCatalogResponse,
-  IrrigationLineConfig,
   UpdateLinePayload,
 } from '@/types/irrigationLine.type';
 import { authBaseQuery } from './authBaseQuery';
@@ -50,11 +50,11 @@ export const irrigationLinesApi = createApi({
     getIrrigationCatalog: builder.query<IrrigationCatalogResponse, void>({
       query: () => '/irrigation/catalog',
     }),
-    calculateIrrigation: builder.mutation<CalculateIrrigationResponse, { config: IrrigationLineConfig }>({
-      query: ({ config }) => ({
+    calculateIrrigation: builder.mutation<CalculateIrrigationResponse, CalculateIrrigationRequest>({
+      query: ({ config, mode, legacy }) => ({
         url: '/irrigation/calculate',
         method: 'POST',
-        body: { config },
+        body: { config, mode, legacy },
       }),
     }),
   }),
